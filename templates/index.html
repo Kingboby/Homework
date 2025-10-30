@@ -98,86 +98,82 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Homework Recorder</h1>
+<div class="container">
+    <h1>Homework Recorder</h1>
 
-        <form method="POST">
-            <label for="subjectInput"><b>Subject:</b></label>
-            <input id="subjectInput" list="subjects" name="subject"
-                   placeholder="-- New Subject --" autocomplete="off"
-                   value="{{ selected }}">
-            <datalist id="subjects">
-                <option value="">-- New Subject --</option>
-                {% for s in subjects %}
-                    <option value="{{ s }}">
-                {% endfor %}
-            </datalist>
+    <form method="POST">
+        <label for="subjectInput"><b>Subject:</b></label>
+        <input id="subjectInput" list="subjects" name="subject"
+               placeholder="-- New Subject --" autocomplete="off"
+               value="{{ selected }}">
+        <datalist id="subjects">
+            <option value="">-- New Subject --</option>
+            {% for s in subjects %}
+                <option value="{{ s }}">
+            {% endfor %}
+        </datalist>
 
-            <label><b>Due Date:</b></label>
-            <div class="date-row">
-                <input type="text" id="dueDateInput" name="due_date"
-                       value="{{ due_date }}" placeholder="DD/MM/YYYY" readonly>
-                <button type="button" class="calendar-button" id="calendarBtn">📅</button>
-            </div>
+        <label><b>Due Date:</b></label>
+        <div class="date-row">
+            <input type="text" id="dueDateInput" name="due_date"
+                   value="{{ due_date }}" placeholder="DD/MM/YYYY" readonly>
+            <button type="button" class="calendar-button" id="calendarBtn">📅</button>
+        </div>
 
-            <label><b>Details:</b></label>
-            <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
+        <label><b>Details:</b></label>
+        <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
 
-            <button type="submit" name="add">Save Homework</button>
-            <button type="submit" name="delete" class="delete">Delete Homework</button>
-        </form>
-    </div>
+        <button type="submit" name="add">Save Homework</button>
+        <button type="submit" name="delete" class="delete">Delete Homework</button>
+    </form>
+</div>
 
-    <!-- Calendar logic (from the previous working version) -->
-    <script>
-        const subjectInput = document.getElementById('subjectInput');
-        const datalist = document.getElementById('subjects');
-        const dueDateInput = document.getElementById('dueDateInput');
-        const calendarBtn = document.getElementById('calendarBtn');
+<script>
+    const subjectInput = document.getElementById('subjectInput');
+    const datalist = document.getElementById('subjects');
+    const dueDateInput = document.getElementById('dueDateInput');
+    const calendarBtn = document.getElementById('calendarBtn');
 
-        // Handle subject selection
-        subjectInput.addEventListener('change', () => {
-            const selectedValues = Array.from(datalist.options).map(opt => opt.value);
-            const subject = subjectInput.value.trim();
+    // --- Subject selection ---
+    subjectInput.addEventListener('change', () => {
+        const selectedValues = Array.from(datalist.options).map(opt => opt.value);
+        const subject = subjectInput.value.trim();
 
-            if (subject === "" || subject === "-- New Subject --") {
-                subjectInput.value = "";
-                dueDateInput.value = "";
-                document.querySelector('textarea[name="details"]').value = "";
-                return;
+        if (subject === "" || subject === "-- New Subject --") {
+            subjectInput.value = "";
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+            return;
+        }
+
+        if (selectedValues.includes(subject)) {
+            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+        } else {
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+        }
+    });
+
+    // --- Calendar button using native <input type="date"> like the previous version ---
+    calendarBtn.addEventListener('click', () => {
+        const picker = document.createElement('input');
+        picker.type = 'date';
+        picker.style.position = 'absolute';
+        picker.style.opacity = 0;
+        document.body.appendChild(picker);
+        picker.focus();
+
+        picker.onchange = () => {
+            const iso = picker.value; // YYYY-MM-DD
+            if (iso) {
+                const parts = iso.split('-');
+                dueDateInput.value = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
             }
+            document.body.removeChild(picker);
+        };
 
-            if (selectedValues.includes(subject)) {
-                window.location.href = `/?subject=${encodeURIComponent(subject)}`;
-            } else {
-                dueDateInput.value = "";
-                document.querySelector('textarea[name="details"]').value = "";
-            }
-        });
-
-        // Calendar button that opens a native date picker
-        calendarBtn.addEventListener('click', () => {
-            const picker = document.createElement('input');
-            picker.type = 'date';
-            picker.style.position = 'absolute';
-            picker.style.opacity = 0;
-            document.body.appendChild(picker);
-            picker.focus();
-
-            picker.onchange = () => {
-                const date = new Date(picker.value);
-                if (!isNaN(date)) {
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    dueDateInput.value = `${day}/${month}/${year}`;
-                }
-                document.body.removeChild(picker);
-            };
-
-            // Click after focus ensures it works on iOS
-            picker.click();
-        });
-    </script>
+        picker.click();
+    });
+</script>
 </body>
 </html>
