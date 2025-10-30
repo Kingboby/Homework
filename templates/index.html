@@ -63,17 +63,26 @@
             const selected = Array.from(datalist.options).map(opt => opt.value);
             const subject = subjectInput.value.trim();
     
-            // Only reload if it's an existing subject
-            if (selected.includes(subject) && subject !== "-- New Subject --") {
+            // If user chooses "New Subject" option
+            if (subject === "-- New Subject --" || subject === "") {
+                // Clear the input and other fields
+                subjectInput.value = "";
+                document.querySelector('input[name="due_date"]').value = "";
+                document.querySelector('textarea[name="details"]').value = "";
+                return;
+            }
+    
+            // If it's an existing subject, reload with that subject loaded
+            if (selected.includes(subject)) {
                 window.location.href = `/?subject=${encodeURIComponent(subject)}`;
             } else {
-                // Clear fields for a new subject, no reload
+                // Otherwise clear fields for a brand-new subject
                 document.querySelector('input[name="due_date"]').value = "";
                 document.querySelector('textarea[name="details"]').value = "";
             }
         });
     
-        // Show datalist options when the input is focused
+        // Make datalist appear again when focusing input
         subjectInput.addEventListener('focus', () => {
             const val = subjectInput.value;
             subjectInput.value = '';
@@ -81,6 +90,8 @@
         });
     </script>
 
+
 </body>
 </html>
+
 
