@@ -60,20 +60,6 @@
             gap: 6px;
         }
 
-        .calendar-button {
-            width: 48px;
-            height: 48px;
-            font-size: 22px;
-            border-radius: 8px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-        }
-
-        .calendar-button:hover {
-            background-color: #0056b3;
-        }
-
         button {
             background-color: #007BFF;
             color: white;
@@ -99,6 +85,7 @@
     <h1>Homework Recorder</h1>
 
     <form method="POST">
+        <!-- Subject dropdown -->
         <label for="subjectInput"><b>Subject:</b></label>
         <input id="subjectInput" list="subjects" name="subject"
                placeholder="-- New Subject --" autocomplete="off"
@@ -110,11 +97,13 @@
             {% endfor %}
         </datalist>
 
+        <!-- ✅ EXACT WORKING DUE DATE INPUT (no JS manipulation) -->
         <label for="dueDateInput">Due Date:</label>
         <div class="date-row">
             <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
         </div>
 
+        <!-- Details -->
         <label><b>Details:</b></label>
         <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
 
@@ -142,45 +131,16 @@
         }
 
         if (options.includes(val)) {
-            // Load that subject’s data
             window.location.href = `/?subject=${encodeURIComponent(val)}`;
         } else {
-            // Clear for a fresh new subject
             dueDateInput.value = "";
             detailsInput.value = "";
         }
     });
 
-    // --- Fix datalist hiding bug (show all options even if typed text exists) ---
+    // --- Fix datalist hiding bug (always show all subjects) ---
     subjectInput.addEventListener('focus', () => {
         subjectInput.value = "";
-    });
-
-    // --- Date format helpers ---
-    function isoToDdMmYyyy(iso) {
-        if (!iso) return "";
-        const [y, m, d] = iso.split('-');
-        return `${d}/${m}/${y}`;
-    }
-    function ddmmyyyyToIso(ddmmyyyy) {
-        if (!ddmmyyyy) return "";
-        const [d, m, y] = ddmmyyyy.split('/');
-        return `${y}-${m}-${d}`;
-    }
-
-    // --- Format date after selecting ---
-    dueDateInput.addEventListener('change', () => {
-        const iso = dueDateInput.value;
-        if (iso && iso.includes('-')) {
-            dueDateInput.value = isoToDdMmYyyy(iso);
-        }
-    });
-
-    // --- Convert backend date on load ---
-    window.addEventListener('load', () => {
-        if (dueDateInput.value && dueDateInput.value.includes('-')) {
-            dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
-        }
     });
 </script>
 </body>
