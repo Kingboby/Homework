@@ -57,20 +57,30 @@
 
     <script>
         const subjectInput = document.getElementById('subjectInput');
+        const datalist = document.getElementById('subjects');
+    
         subjectInput.addEventListener('change', () => {
-            let subject = subjectInput.value.trim();
-            if(subject === "-- New Subject --") {
-                subject = "";
+            const selected = Array.from(datalist.options).map(opt => opt.value);
+            const subject = subjectInput.value.trim();
+    
+            // Only reload if it's an existing subject
+            if (selected.includes(subject) && subject !== "-- New Subject --") {
+                window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+            } else {
+                // Clear fields for a new subject, no reload
                 document.querySelector('input[name="due_date"]').value = "";
                 document.querySelector('textarea[name="details"]').value = "";
             }
-            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
         });
+    
+        // Show datalist options when the input is focused
         subjectInput.addEventListener('focus', () => {
             const val = subjectInput.value;
             subjectInput.value = '';
             setTimeout(() => { subjectInput.value = val; }, 0);
         });
     </script>
+
 </body>
 </html>
+
