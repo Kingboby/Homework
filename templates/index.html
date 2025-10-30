@@ -155,7 +155,7 @@
             }
         });
 
-        // Simple inline date picker using <input type="date">
+        // --- Calendar button (works reliably, single-tap) ---
         calendarBtn.addEventListener('click', () => {
             const picker = document.createElement('input');
             picker.type = 'date';
@@ -163,6 +163,7 @@
             picker.style.opacity = 0;
             document.body.appendChild(picker);
             picker.focus();
+
             picker.onchange = () => {
                 const date = new Date(picker.value);
                 if (!isNaN(date)) {
@@ -173,6 +174,8 @@
                 }
                 document.body.removeChild(picker);
             };
+
+            // Some iOS versions require .click() after focus
             picker.click();
         });
     </script>
