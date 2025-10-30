@@ -45,8 +45,12 @@
         </datalist>
 
         <!-- Due Date -->
+               <!-- Due Date -->
         <label for="dueDateInput">Due Date:</label>
-        <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
+        <div class="date-row">
+            <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
+        </div>
+
 
         <!-- Details -->
         <label for="detailsInput">Details:</label>
@@ -63,6 +67,7 @@
         const detailsInput = document.getElementById('detailsInput');
 
         // --- Helpers: ISO <-> DD/MM/YYYY ---
+               // --- Helpers: ISO <-> DD/MM/YYYY ---
         function isoToDdMmYyyy(iso) {
             if (!iso) return "";
             const parts = iso.split('-');
@@ -75,6 +80,20 @@
             if (parts.length !== 3) return "";
             return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
+        
+        // --- Format date after selecting ---
+        dueDateInput.addEventListener('change', () => {
+            const iso = dueDateInput.value; // YYYY-MM-DD
+            dueDateInput.value = isoToDdMmYyyy(iso);
+        });
+        
+        // --- Convert pre-filled value from backend on page load ---
+        window.addEventListener('load', () => {
+            if (dueDateInput.value.includes('-')) { // likely YYYY-MM-DD from Flask
+                dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
+            }
+        });
+
 
         // --- Subject selection ---
         subjectInput.addEventListener('change', () => {
@@ -89,18 +108,8 @@
             window.location.href = `/?subject=${encodeURIComponent(val)}`;
         });
 
-        // --- Format date after selecting ---
-        dueDateInput.addEventListener('change', () => {
-            const iso = dueDateInput.value; // YYYY-MM-DD
-            dueDateInput.value = isoToDdMmYyyy(iso);
-        });
-
-        // --- Convert pre-filled value from backend on page load ---
-        window.addEventListener('load', () => {
-            if (dueDateInput.value.includes('-')) { // likely YYYY-MM-DD from Flask
-                dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
-            }
-        });
+     
     </script>
 </body>
 </html>
+
