@@ -107,7 +107,7 @@
                placeholder="-- New Subject --" autocomplete="off"
                value="{{ selected }}">
         <datalist id="subjects">
-            <option value="">-- New Subject --</option>
+            <option value="__new__">-- New Subject --</option>
             {% for s in subjects %}
                 <option value="{{ s }}">
             {% endfor %}
@@ -132,25 +132,29 @@
     const subjectInput = document.getElementById('subjectInput');
     const datalist = document.getElementById('subjects');
     const dueDateInput = document.getElementById('dueDateInput');
-    const calendarBtn = document.getElementById('calendarBtn');
-
-    // --- Subject selection ---
+    const detailsInput = document.querySelector('textarea[name="details"]');
+    
     subjectInput.addEventListener('change', () => {
-        const selectedValues = Array.from(datalist.options).map(opt => opt.value);
         const subject = subjectInput.value.trim();
-
-        if (subject === "" || subject === "-- New Subject --") {
-            subjectInput.value = "";
+    
+        // Check if this is the "new subject" placeholder
+        if (subject === "" || subject === "__new__") {
+            // Clear the other fields
             dueDateInput.value = "";
-            document.querySelector('textarea[name="details"]').value = "";
+            detailsInput.value = "";
+            subjectInput.value = ""; // Optional: clear the text box so user can type
             return;
         }
-
-        if (selectedValues.includes(subject)) {
+    
+        // Check if the subject exists in the datalist
+        const existingSubjects = Array.from(datalist.options).map(opt => opt.value);
+        if (existingSubjects.includes(subject)) {
+            // Load existing homework (redirect or AJAX)
             window.location.href = `/?subject=${encodeURIComponent(subject)}`;
         } else {
+            // New subject typed by user
             dueDateInput.value = "";
-            document.querySelector('textarea[name="details"]').value = "";
+            detailsInput.value = "";
         }
     });
 
@@ -168,11 +172,7 @@
             return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
         
-        // --- Format date after selecting ---
-        dueDateInput.addEventListener('change', () => {
-            const iso = dueDateInput.value; // YYYY-MM-DD
-            dueDateInput.value = isoToDdMmYyyy(iso);
-        });
+
         
         // --- Convert pre-filled value from backend on page load ---
         window.addEventListener('load', () => {
@@ -184,3 +184,4 @@
 </script>
 </body>
 </html>
+
