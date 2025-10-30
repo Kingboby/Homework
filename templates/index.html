@@ -91,11 +91,14 @@
                placeholder="-- New Subject --" autocomplete="off"
                value="{{ selected }}">
         <datalist id="subjects">
-            <option value="__new__">-- New Subject --</option>
             {% for s in subjects %}
-                <option value="{{ s }}">
+                {% if s != "__new__" and s != "-- New Subject --" %}
+                    <option value="{{ s }}">
+                {% endif %}
             {% endfor %}
-        </datalist>
+            <option value="-- New Subject --">
+        </datalist>    
+
 
         <!-- ✅ EXACT WORKING DUE DATE INPUT (no JS manipulation) -->
         <label for="dueDateInput">Due Date:</label>
@@ -145,4 +148,5 @@
 </script>
 </body>
 </html>
+
 
