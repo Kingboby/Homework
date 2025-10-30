@@ -9,7 +9,6 @@
     <title>Homework Recorder</title>
 
     <style>
-        /* Prevent scrolling and keep everything centered */
         html, body {
             margin: 0;
             padding: 0;
@@ -49,13 +48,11 @@
             box-sizing: border-box;
         }
 
-        /* Larger tap area for dropdown */
         input[list] {
             font-size: 18px;
             padding: 16px;
         }
 
-        /* Due date input + button layout */
         .date-row {
             display: flex;
             justify-content: center;
@@ -113,12 +110,10 @@
             {% endfor %}
         </datalist>
 
-        <!-- Due Date -->
         <label for="dueDateInput">Due Date:</label>
         <div class="date-row">
             <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
         </div>
-
 
         <label><b>Details:</b></label>
         <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
@@ -134,73 +129,59 @@
     const dueDateInput = document.getElementById('dueDateInput');
     const detailsInput = document.querySelector('textarea[name="details"]');
 
-    // --- Subject selection / new subject handling ---
+    // --- Subject handling ---
     subjectInput.addEventListener('input', () => {
         const val = subjectInput.value.trim();
+        const options = Array.from(datalist.options).map(opt => opt.value);
 
-        if (val === "" || val === "__new__") {
-            // Clear other fields for new subject
+        if (val === "" || val === "__new__" || val === "-- New Subject --") {
+            subjectInput.value = "";
             dueDateInput.value = "";
             detailsInput.value = "";
             return;
         }
 
-        // If existing subject selected, reload data
-        const options = Array.from(datalist.options).map(opt => opt.value);
         if (options.includes(val)) {
+            // Load that subject’s data
             window.location.href = `/?subject=${encodeURIComponent(val)}`;
         } else {
-            // New typed subject, clear fields
-            dueDateInput.value = "";
-            detailsInput.value = "";
-        }
-    });
-    
-        // Check if the subject exists in the datalist
-        const existingSubjects = Array.from(datalist.options).map(opt => opt.value);
-        if (existingSubjects.includes(subject)) {
-            // Load existing homework (redirect or AJAX)
-            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
-        } else {
-            // New subject typed by user
+            // Clear for a fresh new subject
             dueDateInput.value = "";
             detailsInput.value = "";
         }
     });
 
-            // --- Helpers: ISO <-> DD/MM/YYYY ---
-        function isoToDdMmYyyy(iso) {
-            if (!iso) return "";
-            const parts = iso.split('-');
-            if (parts.length !== 3) return "";
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    // --- Fix datalist hiding bug (show all options even if typed text exists) ---
+    subjectInput.addEventListener('focus', () => {
+        subjectInput.value = "";
+    });
+
+    // --- Date format helpers ---
+    function isoToDdMmYyyy(iso) {
+        if (!iso) return "";
+        const [y, m, d] = iso.split('-');
+        return `${d}/${m}/${y}`;
+    }
+    function ddmmyyyyToIso(ddmmyyyy) {
+        if (!ddmmyyyy) return "";
+        const [d, m, y] = ddmmyyyy.split('/');
+        return `${y}-${m}-${d}`;
+    }
+
+    // --- Format date after selecting ---
+    dueDateInput.addEventListener('change', () => {
+        const iso = dueDateInput.value;
+        if (iso && iso.includes('-')) {
+            dueDateInput.value = isoToDdMmYyyy(iso);
         }
-        function ddmmyyyyToIso(ddmmyyyy) {
-            if (!ddmmyyyy) return "";
-            const parts = ddmmyyyy.split('/');
-            if (parts.length !== 3) return "";
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    });
+
+    // --- Convert backend date on load ---
+    window.addEventListener('load', () => {
+        if (dueDateInput.value && dueDateInput.value.includes('-')) {
+            dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
         }
-        
-
-        
-        // --- Convert pre-filled value from backend on page load ---
-        window.addEventListener('load', () => {
-            if (dueDateInput.value.includes('-')) { // likely YYYY-MM-DD from Flask
-                dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
-            }
-        });
-            subjectInput.addEventListener('focus', () => {
-            if (!subjectInput.value) return;
-            const current = subjectInput.value;
-            subjectInput.value = "";          // Temporarily clear
-            setTimeout(() => subjectInput.value = current, 0); // Restore value
-        });
-
-
+    });
 </script>
 </body>
 </html>
-
-
-
