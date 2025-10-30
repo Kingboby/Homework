@@ -3,34 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Homework Recorder</title>
+
+    <!-- Make it a standalone iOS web app -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
+
+    <!-- Optional: home screen icon -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
+
+    <!-- Viewport for proper mobile scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f5f6fa;
             max-width: 450px;
-            margin: 50px auto;
+            margin: 40px auto;
             padding: 20px;
             border-radius: 12px;
+            background: #f5f6fa;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h1 { text-align: center; color: #333; }
-        input, textarea, button {
-            width: 100%;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
+        input, textarea, button { width: 100%; margin: 8px 0; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        .row { display: flex; gap: 10px; }
-        .row input[type="date"] { flex: 1; }
         .buttons { display: flex; gap: 10px; margin-top: 10px; }
     </style>
 </head>
@@ -38,14 +36,12 @@
     <h1>Homework Recorder</h1>
     <form method="POST">
         <label>Subject:</label>
-        <input list="subjects" name="subject" id="subjectInput" value="{{ selected }}" placeholder="Type or select a subject" autocomplete="off">
-
+        <input list="subjects" name="subject" id="subjectInput" value="{{ selected }}" placeholder="Type or select a subject">
         <datalist id="subjects">
             {% for s in subjects %}
                 <option value="{{ s }}">
             {% endfor %}
         </datalist>
-
 
         <label>Due Date:</label>
         <input type="date" name="due_date" value="{{ due_date }}">
@@ -61,19 +57,15 @@
 
     <script>
         const subjectInput = document.getElementById('subjectInput');
-
-        // Automatically reload page when a subject is selected/changed
         subjectInput.addEventListener('change', () => {
-              let subject = subjectInput.value.trim();
-              if(subject === "-- New Subject --") {
-                  subject = "";  // treat as blank/new subject
-                  document.querySelector('input[name="due_date"]').value = "";
-                  document.querySelector('textarea[name="details"]').value = "";
-              }
-              window.location.href = `/?subject=${encodeURIComponent(subject)}`;
-          });
-
-        // Show all options when focusing the input
+            let subject = subjectInput.value.trim();
+            if(subject === "-- New Subject --") {
+                subject = "";
+                document.querySelector('input[name="due_date"]').value = "";
+                document.querySelector('textarea[name="details"]').value = "";
+            }
+            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+        });
         subjectInput.addEventListener('focus', () => {
             const val = subjectInput.value;
             subjectInput.value = '';
