@@ -2,104 +2,178 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
     <title>Homework Recorder</title>
+
     <style>
-        body {
+        /* Prevent scrolling and keep everything centered */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f5f5f5;
             font-family: Arial, sans-serif;
-            max-width: 480px;
-            margin: 50px auto;
-            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
         }
-        label {
-            display: block;
-            margin-top: 15px;
+
+        .container {
+            width: 90%;
+            max-width: 420px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin: 8px 0;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Larger tap area for dropdown */
+        input[list] {
+            font-size: 18px;
+            padding: 16px;
+        }
+
+        /* Due date input + button layout */
+        .date-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .calendar-button {
+            width: 48px;
+            height: 48px;
+            font-size: 22px;
+            border-radius: 8px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+        }
+
+        .calendar-button:hover {
+            background-color: #0056b3;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
             font-weight: bold;
         }
-        input, textarea, select, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            box-sizing: border-box;
-            font-size: 16px;
+
+        button:hover {
+            background-color: #0056b3;
         }
-        button {
-            margin-top: 15px;
+
+        .delete {
+            background-color: #dc3545;
         }
-        input[type="date"] {
-            width: 50%;
-            min-width: 150px;
+
+        .delete:hover {
+            background-color: #b02a37;
         }
     </style>
 </head>
 <body>
-    <h2>Homework Recorder</h2>
-    <form method="POST" action="/">
-        <!-- Subject Dropdown / Input -->
-        <label for="subjectInput">Subject:</label>
-        <input list="subjects" id="subjectInput" name="subject" placeholder="Select or type a subject" value="{{ selected }}">
-        <datalist id="subjects">
-            <option value="-- New Subject --">
-            {% for sub in subjects %}
-            <option value="{{ sub }}">
-            {% endfor %}
-        </datalist>
+    <div class="container">
+        <h1>Homework Recorder</h1>
 
-        <!-- Due Date -->
-        <label for="dueDateInput">Due Date:</label>
-        <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
+        <form method="POST">
+            <label for="subjectInput"><b>Subject:</b></label>
+            <input id="subjectInput" list="subjects" name="subject"
+                   placeholder="-- New Subject --" autocomplete="off"
+                   value="{{ selected }}">
+            <datalist id="subjects">
+                <option value="">-- New Subject --</option>
+                {% for s in subjects %}
+                    <option value="{{ s }}">
+                {% endfor %}
+            </datalist>
 
-        <!-- Details -->
-        <label for="detailsInput">Details:</label>
-        <textarea id="detailsInput" name="details" rows="5">{{ details }}</textarea>
+            <label><b>Due Date:</b></label>
+            <div class="date-row">
+                <input type="text" id="dueDateInput" name="due_date"
+                       value="{{ due_date }}" placeholder="DD/MM/YYYY" readonly>
+                <button type="button" class="calendar-button" id="calendarBtn">📅</button>
+            </div>
 
-        <!-- Buttons -->
-        <button type="submit" name="add">Add / Update</button>
-        <button type="submit" name="delete">Delete</button>
-    </form>
+            <label><b>Details:</b></label>
+            <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
 
+            <button type="submit" name="add">Save Homework</button>
+            <button type="submit" name="delete" class="delete">Delete Homework</button>
+        </form>
+    </div>
+
+    <!-- Calendar logic -->
     <script>
         const subjectInput = document.getElementById('subjectInput');
+        const datalist = document.getElementById('subjects');
         const dueDateInput = document.getElementById('dueDateInput');
-        const detailsInput = document.getElementById('detailsInput');
+        const calendarBtn = document.getElementById('calendarBtn');
 
-        // --- Helpers: ISO <-> DD/MM/YYYY ---
-        function isoToDdMmYyyy(iso) {
-            if (!iso) return "";
-            const parts = iso.split('-');
-            if (parts.length !== 3) return "";
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        function ddmmyyyyToIso(ddmmyyyy) {
-            if (!ddmmyyyy) return "";
-            const parts = ddmmyyyy.split('/');
-            if (parts.length !== 3) return "";
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        // --- Subject selection ---
+        // Handle subject selection
         subjectInput.addEventListener('change', () => {
-            const val = subjectInput.value.trim();
-            if (val === "" || val === "-- New Subject --") {
+            const selectedValues = Array.from(datalist.options).map(opt => opt.value);
+            const subject = subjectInput.value.trim();
+
+            if (subject === "" || subject === "-- New Subject --") {
                 subjectInput.value = "";
                 dueDateInput.value = "";
-                detailsInput.value = "";
-                subjectInput.focus();
+                document.querySelector('textarea[name="details"]').value = "";
                 return;
             }
-            window.location.href = `/?subject=${encodeURIComponent(val)}`;
-        });
 
-        // --- Format date after selecting ---
-        dueDateInput.addEventListener('change', () => {
-            const iso = dueDateInput.value; // YYYY-MM-DD
-            dueDateInput.value = isoToDdMmYyyy(iso);
-        });
-
-        // --- Convert pre-filled value from backend on page load ---
-        window.addEventListener('load', () => {
-            if (dueDateInput.value.includes('-')) { // likely YYYY-MM-DD from Flask
-                dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
+            if (selectedValues.includes(subject)) {
+                window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+            } else {
+                dueDateInput.value = "";
+                document.querySelector('textarea[name="details"]').value = "";
             }
+        });
+
+        // Simple inline date picker using <input type="date">
+        calendarBtn.addEventListener('click', () => {
+            const picker = document.createElement('input');
+            picker.type = 'date';
+            picker.style.position = 'absolute';
+            picker.style.opacity = 0;
+            document.body.appendChild(picker);
+            picker.focus();
+            picker.onchange = () => {
+                const date = new Date(picker.value);
+                if (!isNaN(date)) {
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    dueDateInput.value = `${day}/${month}/${year}`;
+                }
+                document.body.removeChild(picker);
+            };
+            picker.click();
         });
     </script>
 </body>
