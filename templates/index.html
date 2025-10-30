@@ -135,92 +135,80 @@
     const dueDateInput = document.getElementById('dueDateInput');
     const calendarBtn = document.getElementById('calendarBtn');
     
-    // --- Helpers ---
+    // Convert between dd/mm/yyyy and ISO format
     function ddmmyyyyToIso(ddmmyyyy) {
-        if (!ddmmyyyy) return "";
-        const parts = ddmmyyyy.split('/');
-        if (parts.length !== 3) return "";
-        const [d, m, y] = parts;
-        return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    	if (!ddmmyyyy) return "";
+    	const parts = ddmmyyyy.split('/');
+    	if (parts.length !== 3) return "";
+    	const [d, m, y] = parts;
+    	return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
     }
     function isoToDdMmYyyy(iso) {
-        if (!iso) return "";
-        const parts = iso.split('-');
-        if (parts.length !== 3) return "";
-        const [y,m,d] = parts;
-        return `${d.padStart(2,'0')}/${m.padStart(2,'0')}/${y}`;
+    	if (!iso) return "";
+    	const parts = iso.split('-');
+    	if (parts.length !== 3) return "";
+    	const [y,m,d] = parts;
+    	return `${d.padStart(2,'0')}/${m.padStart(2,'0')}/${y}`;
     }
     
-    // --- Subject handling ---
+    // Subject handling
     subjectInput.addEventListener('change', () => {
-        const selectedValues = Array.from(datalist.options).map(opt => opt.value);
-        const subject = subjectInput.value.trim();
+    	const selectedValues = Array.from(datalist.options).map(opt => opt.value);
+    	const subject = subjectInput.value.trim();
     
-        if (subject === "" || subject === "-- New Subject --") {
-            subjectInput.value = "";
-            dueDateInput.value = "";
-            document.querySelector('textarea[name="details"]').value = "";
-            subjectInput.focus();
-            return;
-        }
+    	if (subject === "" || subject === "-- New Subject --") {
+    		subjectInput.value = "";
+    		dueDateInput.value = "";
+    		document.querySelector('textarea[name="details"]').value = "";
+    		subjectInput.focus();
+    		return;
+    	}
     
-        if (selectedValues.includes(subject)) {
-            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
-        } else {
-            dueDateInput.value = "";
-            document.querySelector('textarea[name="details"]').value = "";
-        }
+    	if (selectedValues.includes(subject)) {
+    		window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+    	} else {
+    		dueDateInput.value = "";
+    		document.querySelector('textarea[name="details"]').value = "";
+    	}
     });
     
     subjectInput.addEventListener('focus', () => {
-        const val = subjectInput.value;
-        subjectInput.value = '';
-        setTimeout(() => { subjectInput.value = val; }, 0);
+    	const val = subjectInput.value;
+    	subjectInput.value = '';
+    	setTimeout(() => { subjectInput.value = val; }, 0);
     });
     
-    // --- Calendar button ---
+    // Working single-tap calendar button
     calendarBtn.addEventListener('click', () => {
-        const picker = document.createElement('input');
-        picker.type = 'date';
-        picker.style.position = 'fixed';
-        picker.style.left = '-9999px';
-        picker.style.opacity = '0';
-        picker.tabIndex = -1;
+    	const picker = document.createElement('input');
+    	picker.type = 'date';
+    	picker.style.position = 'absolute';
+    	picker.style.opacity = '0';
+    	picker.style.pointerEvents = 'none';
     
-        // If a date exists, prefill
-        const current = dueDateInput.value.trim();
-        const isoValue = ddmmyyyyToIso(current);
-        if (isoValue) picker.value = isoValue;
+    	// Pre-fill if there's an existing value
+    	const current = dueDateInput.value.trim();
+    	const isoValue = ddmmyyyyToIso(current);
+    	if (isoValue) picker.value = isoValue;
     
-        document.body.appendChild(picker);
+    	document.body.appendChild(picker);
     
-        // Focus/trigger picker
-        picker.showPicker?.(); // works in Chrome
-        picker.focus();
-        picker.click();
+    	// Open picker immediately
+    	picker.addEventListener('change', () => {
+    		if (picker.value) {
+    			dueDateInput.value = isoToDdMmYyyy(picker.value);
+    		}
+    		document.body.removeChild(picker);
+    	});
     
-        let previousValue = picker.value;
-    
-        picker.addEventListener('change', () => {
-            const iso = picker.value;
-            if (iso && iso !== previousValue) {
-                dueDateInput.value = isoToDdMmYyyy(iso);
-            }
-            cleanup();
-        });
-    
-        picker.addEventListener('blur', cleanup);
-    
-        function cleanup() {
-            setTimeout(() => {
-                if (picker && picker.parentNode) picker.parentNode.removeChild(picker);
-            }, 100);
-        }
+    	picker.click(); // <- this opens the picker immediately
     });
     </script>
 
 
+
 </body>
 </html>
+
 
 
