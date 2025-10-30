@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Homework Recorder">
+    <title>Homework Recorder</title>
+
     <style>
+        /* Prevent scrolling and keep everything centered */
         html, body {
             margin: 0;
             padding: 0;
@@ -20,7 +24,7 @@
             -webkit-touch-callout: none;
             touch-action: manipulation;
         }
-    
+
         .container {
             width: 90%;
             max-width: 420px;
@@ -30,11 +34,11 @@
             padding: 20px;
             text-align: center;
         }
-    
+
         h1 {
             margin-bottom: 20px;
         }
-    
+
         input, textarea, button {
             width: 100%;
             margin: 8px 0;
@@ -44,19 +48,21 @@
             font-size: 16px;
             box-sizing: border-box;
         }
-    
+
+        /* Larger tap area for dropdown */
         input[list] {
             font-size: 18px;
             padding: 16px;
         }
-    
+
+        /* Due date input + button layout */
         .date-row {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 6px;
         }
-    
+
         .calendar-button {
             width: 48px;
             height: 48px;
@@ -66,69 +72,89 @@
             color: white;
             border: none;
         }
-    
+
         .calendar-button:hover {
             background-color: #0056b3;
         }
-    
+
         button {
             background-color: #007BFF;
             color: white;
             border: none;
             font-weight: bold;
         }
-    
+
         button:hover {
             background-color: #0056b3;
         }
-    
+
         .delete {
             background-color: #dc3545;
         }
-    
+
         .delete:hover {
             background-color: #b02a37;
         }
     </style>
-
 </head>
 <body>
-    <h2>Homework Recorder</h2>
-    <form method="POST" action="/">
-        <!-- Subject Dropdown / Input -->
-        <label for="subjectInput">Subject:</label>
-        <input list="subjects" id="subjectInput" name="subject" placeholder="Select or type a subject" value="{{ selected }}">
+<div class="container">
+    <h1>Homework Recorder</h1>
+
+    <form method="POST">
+        <label for="subjectInput"><b>Subject:</b></label>
+        <input id="subjectInput" list="subjects" name="subject"
+               placeholder="-- New Subject --" autocomplete="off"
+               value="{{ selected }}">
         <datalist id="subjects">
-            <option value="-- New Subject --">
-            {% for sub in subjects %}
-            <option value="{{ sub }}">
+            <option value="">-- New Subject --</option>
+            {% for s in subjects %}
+                <option value="{{ s }}">
             {% endfor %}
         </datalist>
 
         <!-- Due Date -->
-               <!-- Due Date -->
         <label for="dueDateInput">Due Date:</label>
         <div class="date-row">
             <input type="date" id="dueDateInput" name="due_date" value="{{ due_date }}">
         </div>
 
 
-        <!-- Details -->
-        <label for="detailsInput">Details:</label>
-        <textarea id="detailsInput" name="details" rows="5">{{ details }}</textarea>
+        <label><b>Details:</b></label>
+        <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
 
-        <!-- Buttons -->
-        <button type="submit" name="add">Add / Update</button>
-        <button type="submit" name="delete">Delete</button>
+        <button type="submit" name="add">Save Homework</button>
+        <button type="submit" name="delete" class="delete">Delete Homework</button>
     </form>
+</div>
 
-    <script>
-        const subjectInput = document.getElementById('subjectInput');
-        const dueDateInput = document.getElementById('dueDateInput');
-        const detailsInput = document.getElementById('detailsInput');
+<script>
+    const subjectInput = document.getElementById('subjectInput');
+    const datalist = document.getElementById('subjects');
+    const dueDateInput = document.getElementById('dueDateInput');
+    const calendarBtn = document.getElementById('calendarBtn');
 
-        // --- Helpers: ISO <-> DD/MM/YYYY ---
-               // --- Helpers: ISO <-> DD/MM/YYYY ---
+    // --- Subject selection ---
+    subjectInput.addEventListener('change', () => {
+        const selectedValues = Array.from(datalist.options).map(opt => opt.value);
+        const subject = subjectInput.value.trim();
+
+        if (subject === "" || subject === "-- New Subject --") {
+            subjectInput.value = "";
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+            return;
+        }
+
+        if (selectedValues.includes(subject)) {
+            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+        } else {
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+        }
+    });
+
+            // --- Helpers: ISO <-> DD/MM/YYYY ---
         function isoToDdMmYyyy(iso) {
             if (!iso) return "";
             const parts = iso.split('-');
@@ -155,23 +181,6 @@
             }
         });
 
-
-        // --- Subject selection ---
-        subjectInput.addEventListener('change', () => {
-            const val = subjectInput.value.trim();
-            if (val === "" || val === "-- New Subject --") {
-                subjectInput.value = "";
-                dueDateInput.value = "";
-                detailsInput.value = "";
-                subjectInput.focus();
-                return;
-            }
-            window.location.href = `/?subject=${encodeURIComponent(val)}`;
-        });
-
-     
-    </script>
+</script>
 </body>
 </html>
-
-
