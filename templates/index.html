@@ -2,96 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
     <title>Homework Recorder</title>
 
-    <!-- Make it a standalone iOS web app -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
-
-    <!-- Optional: home screen icon -->
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
-
-    <!-- Viewport for proper mobile scaling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
     <style>
-        body {
+        /* Prevent scrolling and keep everything centered */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* disables scroll */
+            background-color: #f5f5f5;
             font-family: Arial, sans-serif;
-            max-width: 450px;
-            margin: 40px auto;
-            padding: 20px;
-            border-radius: 12px;
-            background: #f5f6fa;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
         }
-        h1 { text-align: center; color: #333; }
-        input, textarea, button { width: 100%; margin: 8px 0; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .buttons { display: flex; gap: 10px; margin-top: 10px; }
+
+        .container {
+            width: 90%;
+            max-width: 420px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin: 8px 0;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Larger tap area for the dropdown */
+        input[list] {
+            font-size: 18px;
+            padding: 16px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-    <h1>Homework Recorder</h1>
-    <form method="POST">
-        <label>Subject:</label>
-        <input list="subjects" name="subject" id="subjectInput" value="{{ selected }}" placeholder="Type or select a subject">
-        <datalist id="subjects">
-            {% for s in subjects %}
-                <option value="{{ s }}">
-            {% endfor %}
-        </datalist>
+    <div class="container">
+        <h1>Homework Recorder</h1>
 
-        <label>Due Date:</label>
-        <input type="date" name="due_date" value="{{ due_date }}">
+        <form method="POST">
+            <label for="subjectInput"><b>Subject:</b></label>
+            <input id="subjectInput" list="subjects" name="subject" 
+                   placeholder="-- New Subject --" autocomplete="off" 
+                   value="{{ selected }}">
+            <datalist id="subjects">
+                <option value="-- New Subject --">
+                {% for s in subjects %}
+                    <option value="{{ s }}">
+                {% endfor %}
+            </datalist>
 
-        <label>Details:</label>
-        <textarea name="details" rows="6">{{ details }}</textarea>
+            <label><b>Due Date:</b></label>
+            <input type="text" name="due_date" value="{{ due_date }}" placeholder="DD/MM/YYYY">
 
-        <div class="buttons">
-            <button type="submit" name="add">💾 Save / Add</button>
-            <button type="submit" name="delete" style="background-color: #dc3545;">🗑 Delete</button>
-        </div>
-    </form>
+            <label><b>Details:</b></label>
+            <textarea name="details" rows="4" placeholder="Enter details...">{{ details }}</textarea>
+
+            <button type="submit" name="add">Save Homework</button>
+            <button type="submit" name="delete" style="background-color:#dc3545;">Delete Homework</button>
+        </form>
+    </div>
 
     <script>
         const subjectInput = document.getElementById('subjectInput');
         const datalist = document.getElementById('subjects');
-    
+
         subjectInput.addEventListener('change', () => {
             const selected = Array.from(datalist.options).map(opt => opt.value);
             const subject = subjectInput.value.trim();
-    
-            // If user chooses "New Subject" option
+
             if (subject === "-- New Subject --" || subject === "") {
-                // Clear the input and other fields
                 subjectInput.value = "";
                 document.querySelector('input[name="due_date"]').value = "";
                 document.querySelector('textarea[name="details"]').value = "";
                 return;
             }
-    
-            // If it's an existing subject, reload with that subject loaded
+
             if (selected.includes(subject)) {
                 window.location.href = `/?subject=${encodeURIComponent(subject)}`;
             } else {
-                // Otherwise clear fields for a brand-new subject
                 document.querySelector('input[name="due_date"]').value = "";
                 document.querySelector('textarea[name="details"]').value = "";
             }
         });
-    
-        // Make datalist appear again when focusing input
+
         subjectInput.addEventListener('focus', () => {
             const val = subjectInput.value;
             subjectInput.value = '';
             setTimeout(() => { subjectInput.value = val; }, 0);
         });
     </script>
-
-
 </body>
 </html>
-
-
