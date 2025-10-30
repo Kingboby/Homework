@@ -180,8 +180,16 @@
                 dueDateInput.value = isoToDdMmYyyy(dueDateInput.value);
             }
         });
+            subjectInput.addEventListener('focus', () => {
+            if (!subjectInput.value) return;
+            const current = subjectInput.value;
+            subjectInput.value = "";          // Temporarily clear
+            setTimeout(() => subjectInput.value = current, 0); // Restore value
+        });
+
 
 </script>
 </body>
 </html>
+
 
