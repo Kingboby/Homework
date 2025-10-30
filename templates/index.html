@@ -130,51 +130,104 @@
 
     <!-- Calendar logic -->
     <script>
-        const subjectInput = document.getElementById('subjectInput');
-        const datalist = document.getElementById('subjects');
-        const dueDateInput = document.getElementById('dueDateInput');
-        const calendarBtn = document.getElementById('calendarBtn');
-
-        // Handle subject selection
-        subjectInput.addEventListener('change', () => {
-            const selectedValues = Array.from(datalist.options).map(opt => opt.value);
-            const subject = subjectInput.value.trim();
-
-            if (subject === "" || subject === "-- New Subject --") {
-                subjectInput.value = "";
-                dueDateInput.value = "";
-                document.querySelector('textarea[name="details"]').value = "";
-                return;
+    const subjectInput = document.getElementById('subjectInput');
+    const datalist = document.getElementById('subjects');
+    const dueDateInput = document.getElementById('dueDateInput');
+    const calendarBtn = document.getElementById('calendarBtn');
+    
+    // Helper: parse dd/mm/yyyy -> YYYY-MM-DD (for input[type=date] value)
+    function ddmmyyyyToIso(ddmmyyyy) {
+        if (!ddmmyyyy) return "";
+        const parts = ddmmyyyy.split('/');
+        if (parts.length !== 3) return "";
+        const [d, m, y] = parts;
+        // if year is two-digit, handle? assume full year
+        return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+    
+    // Helper: iso YYYY-MM-DD -> DD/MM/YYYY
+    function isoToDdMmYyyy(iso) {
+        if (!iso) return "";
+        const parts = iso.split('-');
+        if (parts.length !== 3) return "";
+        const [y,m,d] = parts;
+        return `${d.padStart(2,'0')}/${m.padStart(2,'0')}/${y}`;
+    }
+    
+    // SUBJECT handling: selects existing subjects or clears for new
+    subjectInput.addEventListener('change', () => {
+        const selectedValues = Array.from(datalist.options).map(opt => opt.value);
+        const subject = subjectInput.value.trim();
+    
+        if (subject === "" || subject === "-- New Subject --") {
+            // Clear fields and focus the subject input ready for typing
+            subjectInput.value = "";
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+            subjectInput.focus();
+            return;
+        }
+    
+        if (selectedValues.includes(subject)) {
+            // Load existing subject (reload with query param)
+            window.location.href = `/?subject=${encodeURIComponent(subject)}`;
+        } else {
+            // New subject typed - clear fields but don't reload
+            dueDateInput.value = "";
+            document.querySelector('textarea[name="details"]').value = "";
+        }
+    });
+    
+    // Show datalist options on focus (UX improvement)
+    subjectInput.addEventListener('focus', () => {
+        const val = subjectInput.value;
+        subjectInput.value = '';
+        setTimeout(() => { subjectInput.value = val; }, 0);
+    });
+    
+    // CALENDAR: open native date picker reliably and format result DD/MM/YYYY
+    calendarBtn.addEventListener('click', () => {
+        // Create a hidden input[type=date] for native picker
+        const picker = document.createElement('input');
+        picker.type = 'date';
+        picker.style.position = 'fixed';
+        picker.style.left = '-9999px';
+        picker.style.opacity = '0';
+        picker.tabIndex = -1;
+    
+        // Pre-fill picker if dueDateInput has DD/MM/YYYY
+        const current = dueDateInput.value.trim();
+        const isoValue = ddmmyyyyToIso(current);
+        if (isoValue) picker.value = isoValue;
+    
+        document.body.appendChild(picker);
+    
+        // Focus & open native picker
+        picker.focus();
+        // On some mobile browsers need to call click()
+        picker.click();
+    
+        // When a date is chosen
+        picker.addEventListener('change', () => {
+            const iso = picker.value; // yyyy-mm-dd
+            if (iso) {
+                dueDateInput.value = isoToDdMmYyyy(iso);
             }
-
-            if (selectedValues.includes(subject)) {
-                window.location.href = `/?subject=${encodeURIComponent(subject)}`;
-            } else {
-                dueDateInput.value = "";
-                document.querySelector('textarea[name="details"]').value = "";
-            }
+            // cleanup
+            setTimeout(() => {
+                if (picker && picker.parentNode) picker.parentNode.removeChild(picker);
+            }, 0);
         });
-
-        // Simple inline date picker using <input type="date">
-        calendarBtn.addEventListener('click', () => {
-            const picker = document.createElement('input');
-            picker.type = 'date';
-            picker.style.position = 'absolute';
-            picker.style.opacity = 0;
-            document.body.appendChild(picker);
-            picker.focus();
-            picker.onchange = () => {
-                const date = new Date(picker.value);
-                if (!isNaN(date)) {
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    dueDateInput.value = `${day}/${month}/${year}`;
-                }
-                document.body.removeChild(picker);
-            };
-            picker.click();
+    
+        // If user cancels, remove the picker
+        picker.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (picker && picker.parentNode) picker.parentNode.removeChild(picker);
+            }, 200);
         });
+    });
     </script>
+
 </body>
 </html>
+
