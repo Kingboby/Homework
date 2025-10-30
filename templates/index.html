@@ -128,7 +128,7 @@
         </form>
     </div>
 
-    <!-- Calendar logic -->
+    <!-- Calendar logic (from the previous working version) -->
     <script>
         const subjectInput = document.getElementById('subjectInput');
         const datalist = document.getElementById('subjects');
@@ -155,7 +155,7 @@
             }
         });
 
-        // --- Calendar button (works reliably, single-tap) ---
+        // Calendar button that opens a native date picker
         calendarBtn.addEventListener('click', () => {
             const picker = document.createElement('input');
             picker.type = 'date';
@@ -175,7 +175,7 @@
                 document.body.removeChild(picker);
             };
 
-            // Some iOS versions require .click() after focus
+            // Click after focus ensures it works on iOS
             picker.click();
         });
     </script>
