@@ -1,194 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
-    <title>To-Do List</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 0;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LOCK IN!">
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
 
-  .todo-container {
-    width: 90%;
-    max-width: 420px;
-    margin: 40px auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-  }
+    .container {
+      width: 90%;
+      max-width: 420px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
 
-  h1 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-  }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
 
-  .input-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
 
-  #taskInput {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-  }
+    #taskInput {
+      flex: 1;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
 
-  .add-btn {
-    width: 48px;
-    font-size: 24px;
-    color: white;
-    background: #007bff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
+    .add-btn {
+      width: 48px;
+      font-size: 24px;
+      color: white;
+      background: #007bff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
+    ul { list-style: none; padding: 0; margin: 0; }
 
-  .task {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #f0f0f0;
-    margin-bottom: 10px;
-    padding: 14px 12px;
-    border-radius: 8px;
-    font-size: 16px;
-    position: relative;
-    transition: transform 0.25s ease;
-    touch-action: none;
-  }
+    .task {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0f0f0;
+      margin-bottom: 10px;
+      padding: 14px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      position: relative;
+      transition: transform 0.25s ease;
+      touch-action: none;
+    }
 
-  .handle {
-    font-size: 22px;
-    cursor: grab;
-    padding: 0 10px;
-    user-select: none;
-    touch-action: none;
-  }
+    .handle {
+      font-size: 22px;
+      cursor: grab;
+      padding: 0 10px;
+      user-select: none;
+      touch-action: none;
+    }
 
-  .delete-btn {
-    position: absolute;
-    right: -80px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    opacity: 0;
-    transition: all 0.3s ease;
-  }
+    .delete-btn {
+      position: absolute;
+      right: -80px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
 
-  .swiped .delete-btn {
-    right: 10px;
-    opacity: 1;
-  }
+    .swiped .delete-btn {
+      right: 10px;
+      opacity: 1;
+    }
 
-  .dragging {
-    z-index: 1000;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  }
+    .dragging {
+      z-index: 1000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
 
-  .placeholder {
-    background: transparent;
-    border: 2px dashed #ccc;
-  }
-  /* Hamburger button */
-        .hamburger {
-            position: fixed;
-            top: 15px;
-            left: 20px;
-            cursor: pointer;
-            z-index: 2;
-        }
-    
-        .hamburger div {
-            width: 30px;
-            height: 4px;
-            background-color: #333;
-            margin: 6px 0;
-        }
-    
-      /* Slide-over nav */
-        .sidenav {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #f5f5f5;
-            overflow-x: hidden;
-            transition: 0.3s;
-            padding-top: 60px;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-            z-index: 1; /* slides over content */
-        }
-    
-        .sidenav button {
-            display: block;
-            padding: 12px 20px;
-            margin: 10px;
-            width: calc(100% - 40px);
-            font-size: 18px;
-            background-color: #ddd;
-            border: none;
-            cursor: pointer;
-            color: black;
-        }
-    
-      /* Optional: dim background when nav is open */
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background: rgba(0,0,0,0.3);
-            display: none;
-            z-index: 0;
-        }
-</style>
+    .placeholder {
+      background: transparent;
+      border: 2px dashed #ccc;
+    }
+
+    /* Navigation (copied exactly from Homework) */
+    .hamburger {
+      position: fixed;
+      top: 15px;
+      left: 20px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .hamburger div {
+      width: 30px;
+      height: 4px;
+      background-color: #333;
+      margin: 6px 0;
+    }
+
+    .sidenav {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #f5f5f5;
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+
+    .sidenav button {
+      display: block;
+      padding: 12px 20px;
+      margin: 10px;
+      width: calc(100% - 40px);
+      font-size: 18px;
+      background-color: #ddd;
+      border: none;
+      cursor: pointer;
+      color: black;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      display: none;
+      z-index: 0;
+    }
+  </style>
 </head>
+
 <body>
-  <!-- Hamburger -->
-    <div class="hamburger" onclick="toggleNav()">
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-    
-    <!-- Overlay -->
-    <div id="overlay" onclick="toggleNav()"></div>
-    
-    <!-- Slide-over nav -->
-    <div id="mySidenav" class="sidenav">
-        <button onclick="location.href='/'">Homework</button>
-        <button onclick="location.href='/todo'">ToDo</button>
-        <button onclick="location.href='/timetable'">TimeTable</button>
-        <button>Coming Soon...</button>
-        
-    </div>
-  <div class="todo-container">
+  <!-- Hamburger + Nav -->
+  <div class="hamburger" onclick="toggleNav()">
+    <div></div><div></div><div></div>
+  </div>
+  <div id="overlay" onclick="toggleNav()"></div>
+  <div id="mySidenav" class="sidenav">
+    <button onclick="location.href='/'">Homework</button>
+    <button onclick="location.href='/todo'">To-Do</button>
+    <button onclick="location.href='/timetable'">Timetable</button>
+    <button>Coming Soon...</button>
+  </div>
+
+  <div class="container">
     <h1>To-Do List</h1>
     <div class="input-row">
       <input id="taskInput" type="text" placeholder="Enter a new task...">
@@ -197,132 +194,90 @@
     <ul id="taskList"></ul>
   </div>
 
-<script>
-const taskInput = document.getElementById('taskInput');
-const addTaskBtn = document.getElementById('addTaskBtn');
-const taskList = document.getElementById('taskList');
+  <script>
+    // Same JS as before + toggleNav
+    const taskInput = document.getElementById('taskInput');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskList = document.getElementById('taskList');
 
-addTaskBtn.addEventListener('click', addTask);
-taskInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addTask(); } });
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addTask(); } });
 
-function addTask() {
-  const text = taskInput.value.trim();
-  if (!text) return;
-  const li = document.createElement('li');
-  li.className = 'task';
-  li.innerHTML = `
-    <span class="text">${text}</span>
-    <span class="handle">☰</span>
-    <button class="delete-btn">Delete</button>
-  `;
-  taskList.appendChild(li);
-  attachTaskEvents(li);
-  taskInput.value = '';
-}
-
-function attachTaskEvents(task) {
-  const handle = task.querySelector('.handle');
-  const deleteBtn = task.querySelector('.delete-btn');
-  let startY, startX, dragging = false, swiping = false;
-  let placeholder = null;
-
-  // --- DRAGGING ---
-  handle.addEventListener('touchstart', startDrag);
-  handle.addEventListener('mousedown', startDrag);
-
-  function startDrag(e) {
-    e.preventDefault();
-    dragging = true;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    const rect = task.getBoundingClientRect();
-    const offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
-    placeholder = document.createElement('li');
-    placeholder.className = 'task placeholder';
-    placeholder.style.height = rect.height + 'px';
-    taskList.insertBefore(placeholder, task.nextSibling);
-
-    task.classList.add('dragging');
-    task.style.position = 'absolute';
-    task.style.width = rect.width + 'px';
-    task.style.left = rect.left + 'px';
-    task.style.top = rect.top + 'px';
-
-    const moveHandler = ev => {
-      const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
-      const deltaY = clientY - startY;
-      task.style.top = rect.top + deltaY + 'px';
-
-      const siblings = [...taskList.children].filter(c => c !== placeholder && c !== task);
-      for (let sib of siblings) {
-        const box = sib.getBoundingClientRect();
-        if (clientY < box.top + box.height / 2) {
-          taskList.insertBefore(placeholder, sib);
-          break;
-        }
-        if (sib === siblings[siblings.length - 1]) {
-          taskList.appendChild(placeholder);
-        }
-      }
-    };
-
-    const endHandler = () => {
-      dragging = false;
-      document.removeEventListener('mousemove', moveHandler);
-      document.removeEventListener('mouseup', endHandler);
-      document.removeEventListener('touchmove', moveHandler);
-      document.removeEventListener('touchend', endHandler);
-
-      task.classList.remove('dragging');
-      task.style.position = '';
-      task.style.width = '';
-      task.style.left = '';
-      task.style.top = '';
-      taskList.insertBefore(task, placeholder);
-      placeholder.remove();
-    };
-
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('mouseup', endHandler);
-    document.addEventListener('touchmove', moveHandler);
-    document.addEventListener('touchend', endHandler);
-  }
-
-  // --- SWIPE TO DELETE ---
-  task.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    swiping = false;
-  });
-
-  task.addEventListener('touchmove', e => {
-    const dx = e.touches[0].clientX - startX;
-    if (dx < -40) {
-      task.classList.add('swiped');
-      swiping = true;
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (!text) return;
+      const li = document.createElement('li');
+      li.className = 'task';
+      li.innerHTML = `<span class="text">${text}</span><span class="handle">☰</span><button class="delete-btn">Delete</button>`;
+      taskList.appendChild(li);
+      attachTaskEvents(li);
+      taskInput.value = '';
     }
-    if (dx > 40 && task.classList.contains('swiped')) {
-      task.classList.remove('swiped');
-      swiping = true;
-    }
-  });
 
-  deleteBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    task.remove();
-  });
-}
-         function toggleNav() {
-        const nav = document.getElementById("mySidenav");
-        const overlay = document.getElementById("overlay");
-        if (nav.style.width === "250px") {
-          nav.style.width = "0";
-          overlay.style.display = "none";
-        } else {
-          nav.style.width = "250px";
-          overlay.style.display = "block";
-        }
+    function attachTaskEvents(task) {
+      const handle = task.querySelector('.handle');
+      const deleteBtn = task.querySelector('.delete-btn');
+      let startY, startX, placeholder = null;
+
+      // DRAGGING
+      handle.addEventListener('touchstart', startDrag);
+      handle.addEventListener('mousedown', startDrag);
+      function startDrag(e) {
+        e.preventDefault();
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = task.getBoundingClientRect();
+        placeholder = document.createElement('li');
+        placeholder.className = 'task placeholder';
+        placeholder.style.height = rect.height + 'px';
+        taskList.insertBefore(placeholder, task.nextSibling);
+        task.classList.add('dragging');
+        task.style.position = 'absolute';
+        task.style.width = rect.width + 'px';
+        task.style.left = rect.left + 'px';
+        task.style.top = rect.top + 'px';
+        const moveHandler = ev => {
+          const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+          const deltaY = clientY - startY;
+          task.style.top = rect.top + deltaY + 'px';
+          const siblings = [...taskList.children].filter(c => c !== placeholder && c !== task);
+          for (let sib of siblings) {
+            const box = sib.getBoundingClientRect();
+            if (clientY < box.top + box.height / 2) { taskList.insertBefore(placeholder, sib); break; }
+            if (sib === siblings[siblings.length - 1]) taskList.appendChild(placeholder);
+          }
+        };
+        const endHandler = () => {
+          document.removeEventListener('mousemove', moveHandler);
+          document.removeEventListener('mouseup', endHandler);
+          document.removeEventListener('touchmove', moveHandler);
+          document.removeEventListener('touchend', endHandler);
+          task.classList.remove('dragging');
+          task.style = '';
+          taskList.insertBefore(task, placeholder);
+          placeholder.remove();
+        };
+        document.addEventListener('mousemove', moveHandler);
+        document.addEventListener('mouseup', endHandler);
+        document.addEventListener('touchmove', moveHandler);
+        document.addEventListener('touchend', endHandler);
       }
-</script>
+
+      // SWIPE TO DELETE
+      task.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+      task.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - startX;
+        if (dx < -40) task.classList.add('swiped');
+        if (dx > 40) task.classList.remove('swiped');
+      });
+      deleteBtn.addEventListener('click', e => task.remove());
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const overlay = document.getElementById("overlay");
+      if (nav.style.width === "250px") { nav.style.width = "0"; overlay.style.display = "none"; }
+      else { nav.style.width = "250px"; overlay.style.display = "block"; }
+    }
+  </script>
 </body>
 </html>
