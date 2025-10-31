@@ -9,17 +9,14 @@
     --bg:#f5f5f5; --card:#fff; --accent:#007BFF; --muted:#f0f0f0; --danger:#dc3545;
   }
   html,body{height:100%; margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg);}
-  .todo-container{
-    width:90%; max-width:420px; margin:30px auto; background:var(--card);
-    padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08);
-  }
+  .todo-container{width:90%; max-width:420px; margin:30px auto; background:var(--card);
+    padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08);}
   h1{text-align:center;margin:0 0 16px;color:#333}
   .input-row{display:flex; gap:8px; margin-bottom:16px}
   #taskInput{flex:1;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:15px}
   .add-btn{width:50px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:22px;cursor:pointer}
   .add-btn:active{transform:scale(.98)}
   ul#taskList{list-style:none;padding:0;margin:0}
-  /* item container to support swipe + delete button */
   .task-wrap{position:relative; overflow:visible}
   .task{
     background:var(--muted); margin-bottom:10px; border-radius:10px;
@@ -36,16 +33,13 @@
     user-select:none; -webkit-user-select:none;
   }
   .handle:active{cursor:grabbing}
-  /* delete button that sits to the right (hidden by default) */
   .delete-btn{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
     background:var(--danger); color:#fff; border:none; padding:8px 12px;
     border-radius:8px; display:none; z-index:5; font-weight:bold; cursor:pointer;
   }
   .delete-show .delete-btn{display:block}
-  /* when revealed by swipe we push the task left to show delete */
   .swiped { transform: translateX(-110px); }
-  /* small hint for mobile - make handle more touch friendly */
   @media (max-width:480px){
     .handle{width:42px;height:42px;font-size:18px}
     .add-btn{width:56px}
@@ -64,7 +58,7 @@
   </div>
 
 <script>
-/* ======= basic add task behavior ======= */
+/* ======= setup ======= */
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
@@ -77,16 +71,14 @@ function addTask(){
   if(!text) return;
   const liWrap = document.createElement('li'); liWrap.className = 'task-wrap';
   const li = document.createElement('div'); li.className = 'task';
-  li.setAttribute('draggable','true');
-
+  li.setAttribute('draggable','false'); // item itself not draggable; handle will be
   li.innerHTML = `<div class="text">${escapeHtml(text)}</div>
-                  <div class="handle" aria-hidden="true">☰</div>`;
-  // delete button element (positioned absolutely)
+                  <div class="handle" aria-hidden="true" draggable="true">☰</div>`;
   const delBtn = document.createElement('button');
   delBtn.className = 'delete-btn';
   delBtn.textContent = 'Delete';
-  delBtn.addEventListener('click', () => { liWrap.remove(); });
-
+  // delete click: remove wrapper; stop propagation so other handlers don't hide it first
+  delBtn.addEventListener('click', (ev) => { ev.stopPropagation(); liWrap.remove(); });
   liWrap.appendChild(li);
   liWrap.appendChild(delBtn);
 
@@ -95,84 +87,95 @@ function addTask(){
   taskInput.value = '';
   taskInput.focus();
 }
-
-/* simple escape to avoid HTML injection */
 function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-/* ======= Reordering: HTML5 drag for mouse + touch fallback ======= */
+/* ======= HTML5 drag + get insertion ======= */
+let draggedItem = null; // actual .task element being dragged
 
-/* HTML5 drag: compute insertion position by pointer Y */
+// when dragging over list, compute insertion based on pointer Y
 taskList.addEventListener('dragover', e => {
   e.preventDefault();
   const after = getDragAfterElement(taskList, e.clientY);
-  const dragging = document.querySelector('.dragging');
-  if(!dragging) return;
+  if(!draggedItem) return;
   if(after == null){
-    taskList.appendChild(dragging.parentElement);
+    taskList.appendChild(draggedItem.parentElement);
   } else {
-    taskList.insertBefore(dragging.parentElement, after.parentElement);
+    taskList.insertBefore(draggedItem.parentElement, after.parentElement);
   }
 });
 
 function getDragAfterElement(container, y){
-  const items = [...container.querySelectorAll('.task')].filter(i=>!i.classList.contains('dragging'));
+  const items = [...container.querySelectorAll('.task')].filter(i=>i !== draggedItem);
   let closest = null;
-  let closestOffset = Number.NEGATIVE_INFINITY;
+  let closestOffset = Number.POSITIVE_INFINITY;
   for(const item of items){
     const box = item.getBoundingClientRect();
-    const offset = y - box.top - box.height/2;
-    if(offset > closestOffset){
+    const offset = Math.abs(y - (box.top + box.height/2));
+    if(offset < closestOffset){
       closestOffset = offset;
       closest = item;
     }
   }
-  return closest; // may be null
+  return closest;
 }
 
-/* ======= Touch-based drag (handle) & swipe-to-delete ======= */
-
+/* ======= Attach events to an item wrapper ======= */
 function attachItemEvents(wrapper, item, deleteBtn){
-  // Mouse/HTML5 drag handlers
-  item.addEventListener('dragstart', e => {
-    item.classList.add('dragging');
-    // small data to allow drag
-    e.dataTransfer.setData('text/plain', '');
-    e.dataTransfer.effectAllowed = 'move';
-  });
-  item.addEventListener('dragend', () => { item.classList.remove('dragging'); });
-
-  // Find handle element
+  // HTML5 drag uses the handle, not the whole item (so user grabs handle)
   const handle = item.querySelector('.handle');
 
-  /* --- TOUCH reordering when dragging the handle (mobile) --- */
-  let touchDrag = { active:false, startY:0, placeholder:null, origin:null, lastOver:null };
+  // handle dragstart => set draggedItem and style
+  handle.addEventListener('dragstart', (e) => {
+    // find the .task element
+    draggedItem = item;
+    item.classList.add('dragging');
+    try { e.dataTransfer.setData('text/plain',''); } catch (err) {}
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  handle.addEventListener('dragend', () => {
+    if(draggedItem) draggedItem.classList.remove('dragging');
+    draggedItem = null;
+  });
+
+  // Also support dragging via mouse on entire task for convenience
+  item.addEventListener('dragstart', (e) => {
+    // only set if draggedItem hasn't been set by handle
+    if(!draggedItem){
+      draggedItem = item;
+      item.classList.add('dragging');
+      try { e.dataTransfer.setData('text/plain',''); } catch (err) {}
+      e.dataTransfer.effectAllowed = 'move';
+    }
+  });
+  item.addEventListener('dragend', () => {
+    if(item) item.classList.remove('dragging');
+    draggedItem = null;
+  });
+
+  /* --- TOUCH reordering (pointer) when pressing handle --- */
+  let touchDrag = { active:false, origin:null, lastOver:null };
   handle.addEventListener('pointerdown', (ev) => {
-    // only start pointer drag with primary button/touch
     if(ev.pointerType === 'mouse' && ev.button !== 0) return;
-    // if it's a touch or pen, start custom drag
     handle.setPointerCapture(ev.pointerId);
     touchDrag.active = true;
-    touchDrag.startY = ev.clientY;
     touchDrag.origin = wrapper;
-    originStartWrapperDrag(wrapper);
+    // visual cue
+    item.classList.add('dragging');
   });
   handle.addEventListener('pointermove', (ev) => {
     if(!touchDrag.active) return;
-    // determine element under pointer
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
     const nearestLi = el ? el.closest('.task') : null;
     if(nearestLi && nearestLi !== touchDrag.lastOver && nearestLi !== item){
       touchDrag.lastOver = nearestLi;
-      // insert before/after based on position
-      const listItems = Array.from(taskList.querySelectorAll('.task'));
-      const origin = item;
-      const target = nearestLi;
-      const originIndex = listItems.indexOf(origin);
-      const targetIndex = listItems.indexOf(target);
+      const items = Array.from(taskList.querySelectorAll('.task'));
+      const originIndex = items.indexOf(item);
+      const targetIndex = items.indexOf(nearestLi);
       if(originIndex < targetIndex){
-        target.parentElement.after(origin.parentElement);
+        nearestLi.parentElement.after(item.parentElement);
       } else {
-        target.parentElement.before(origin.parentElement);
+        nearestLi.parentElement.before(item.parentElement);
       }
     }
   });
@@ -181,26 +184,21 @@ function attachItemEvents(wrapper, item, deleteBtn){
     touchDrag.active = false;
     handle.releasePointerCapture(ev.pointerId);
     item.classList.remove('dragging');
-    cleanupWrapperDrag(wrapper);
   });
   handle.addEventListener('pointercancel', (ev) => {
     if(!touchDrag.active) return;
     touchDrag.active = false;
     handle.releasePointerCapture(ev.pointerId);
     item.classList.remove('dragging');
-    cleanupWrapperDrag(wrapper);
   });
 
-  /* --- SWIPE LEFT logic (for revealing delete) --- */
-  // swipe variables
-  let sw = { startX:0, startY:0, curX:0, active:false, swiped:false };
+  /* --- SWIPE LEFT to reveal delete (touch) --- */
+  let sw = { active:false, startX:0, startY:0, curX:0 };
   wrapper.addEventListener('touchstart', function(e){
     if(e.touches.length > 1) return;
     sw.active = true;
-    sw.swiped = wrapper.classList.contains('delete-show');
     sw.startX = e.touches[0].clientX;
     sw.startY = e.touches[0].clientY;
-    // ensure no conflict with potential handle drag
   }, {passive:true});
 
   wrapper.addEventListener('touchmove', function(e){
@@ -209,15 +207,11 @@ function attachItemEvents(wrapper, item, deleteBtn){
     const y = e.touches[0].clientY;
     const dx = x - sw.startX;
     const dy = y - sw.startY;
-    // if vertical movement dominating, ignore swipe (allow scrolling)
-    if(Math.abs(dy) > Math.abs(dx)) return;
-    // horizontal move: prevent default to stop page from moving
+    if(Math.abs(dy) > Math.abs(dx)) return; // vertical -> ignore
     e.preventDefault();
     sw.curX = dx;
-    // only allow left swipe (negative dx) or small positive to close
     const translate = Math.min(0, dx);
     wrapper.querySelector('.task').style.transform = `translateX(${translate}px)`;
-    // if move passes threshold show delete on release
   }, {passive:false});
 
   wrapper.addEventListener('touchend', function(e){
@@ -227,11 +221,9 @@ function attachItemEvents(wrapper, item, deleteBtn){
     const final = sw.curX || 0;
     const taskEl = wrapper.querySelector('.task');
     if(final <= threshold){
-      // reveal delete
       wrapper.classList.add('delete-show');
       taskEl.classList.add('swiped');
     } else {
-      // hide delete / reset
       wrapper.classList.remove('delete-show');
       taskEl.classList.remove('swiped');
       taskEl.style.transform = '';
@@ -239,35 +231,24 @@ function attachItemEvents(wrapper, item, deleteBtn){
     sw.curX = 0;
   });
 
-  // clicking delete already wired earlier; also allow mouse drag of delete:
-  // add double-click to delete as fallback
-  deleteBtn.addEventListener('dblclick', () => wrapper.remove());
-
-  // Also allow desktop users to click the task to close delete
+  // prevent wrapper click from hiding delete when clicking delete btn — handled by stopPropagation on deleteBtn
   wrapper.addEventListener('click', (ev) => {
-    // if clicking outside delete button and delete is shown, hide it
     if(wrapper.classList.contains('delete-show') && !ev.target.closest('.delete-btn')){
+      // hide delete if clicking outside delete button
       wrapper.classList.remove('delete-show');
       wrapper.querySelector('.task').classList.remove('swiped');
       wrapper.querySelector('.task').style.transform = '';
     }
   });
+
+  // Allow keyboard delete via Enter on deleteBtn
+  deleteBtn.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); deleteBtn.click(); }
+  });
 }
 
-/* helper during pointer handle drag to show dragging style */
-function originStartWrapperDrag(wrapper){
-  const item = wrapper.querySelector('.task');
-  item.classList.add('dragging');
-}
-function cleanupWrapperDrag(wrapper){
-  const item = wrapper.querySelector('.task');
-  item.classList.remove('dragging');
-}
-
-/* utility for initial items if you want sample tasks */
-const samples = ['Finish maths worksheet','Study biology notes','Buy groceries'];
-samples.forEach(t => { taskInput.value = t; addTask(); });
-
+/* sample tasks for testing */
+['Finish maths worksheet','Study biology notes','Buy groceries'].forEach(t => { taskInput.value = t; addTask(); });
 </script>
 </body>
 </html>
