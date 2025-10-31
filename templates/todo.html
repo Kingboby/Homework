@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .todo-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            width: 90%;
+            max-width: 420px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button.add-btn {
+            width: 48px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        button.add-btn:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            background: #f0f0f0;
+            margin-bottom: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+        }
+
+        li.dragging {
+            opacity: 0.4;
+        }
+
+        .handle {
+            font-size: 20px;
+            cursor: grab;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+<div class="todo-container">
+    <h1>To-Do List</h1>
+    <div class="input-row">
+        <input type="text" id="taskInput" placeholder="Enter a new task...">
+        <button class="add-btn" id="addTaskBtn">+</button>
+    </div>
+    <ul id="taskList"></ul>
+</div>
+
+<script>
+    const taskInput = document.getElementById("taskInput");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskList = document.getElementById("taskList");
+
+    addTaskBtn.addEventListener("click", addTask);
+    taskInput.addEventListener("keypress", e => {
+        if (e.key === "Enter") addTask();
+    });
+
+    function addTask() {
+        const taskText = taskInput.value.trim();
+        if (!taskText) return;
+
+        const li = document.createElement("li");
+        li.draggable = true;
+        li.innerHTML = `
+            <span>${taskText}</span>
+            <span class="handle">☰</span>
+        `;
+
+        addDragEvents(li);
+        taskList.appendChild(li);
+        taskInput.value = "";
+    }
+
+    // --- Drag and drop reorder ---
+    let draggedItem = null;
+
+    function addDragEvents(li) {
+        li.addEventListener("dragstart", () => {
+            draggedItem = li;
+            li.classList.add("dragging");
+        });
+        li.addEventListener("dragend", () => {
+            draggedItem = null;
+            li.classList.remove("dragging");
+        });
+        li.addEventListener("dragover", e => e.preventDefault());
+        li.addEventListener("drop", e => {
+            e.preventDefault();
+            if (draggedItem && draggedItem !== li) {
+                const items = Array.from(taskList.children);
+                const draggedIndex = items.indexOf(draggedItem);
+                const droppedIndex = items.indexOf(li);
+                if (draggedIndex < droppedIndex) {
+                    li.after(draggedItem);
+                } else {
+                    li.before(draggedItem);
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
