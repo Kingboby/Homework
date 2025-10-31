@@ -93,6 +93,8 @@ def index():
             db.session.commit()
             return redirect(url_for("index"))
 
+
+
     # GET: read selected subject query param
     selected = (request.args.get("subject") or "").strip()
     # list all subjects (alphabetical)
@@ -109,7 +111,19 @@ def index():
                            selected=selected,
                            due_date=selected_due,
                            details=selected_details)
+@app.route('/todo')
+def todo():
+    return render_template('todo.html')
+
+@app.route('/timetable')
+def timetable():
+    return render_template('timetable.html')
+
+@app.route('/comingsoon')
+def comingsoon():
+    return render_template('comingsoon.html')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
