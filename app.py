@@ -1,72 +1,114 @@
+# app.py
 from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 import os
+import datetime
 
 app = Flask(__name__)
 
-# Homework folder in Dropbox
-homework_folder = os.path.expanduser("~/Dropbox/Homework")
-os.makedirs(homework_folder, exist_ok=True)
+# Use DATABASE_URL (Railway) if present; otherwise use local sqlite for testing
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    # Local fallback (makes it easy to develop without a remote DB)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///homework.db"
 
-def get_homework_list():
-    """List all homework subjects"""
-    return [f[:-4] for f in os.listdir(homework_folder) if f.endswith(".txt")]
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
 
-def read_homework(subject):
-    """Read homework file"""
-    file_path = os.path.join(homework_folder, f"{subject}.txt")
-    if not os.path.exists(file_path):
-        return "", ""
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-    due = lines[0].replace("Due Date: ", "").strip() if len(lines) > 0 else ""
-    details = lines[1].replace("Details: ", "").strip() if len(lines) > 1 else ""
-    return due, details
+# --- Models ---
+class Homework(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(200), nullable=False, unique=True)
+    due_date = db.Column(db.Date, nullable=True)   # store as Date
+    details = db.Column(db.Text, nullable=True)
 
-def save_homework(subject, due, details):
-    """Save homework"""
-    with open(os.path.join(homework_folder, f"{subject}.txt"), "w") as f:
-        f.write(f"Due Date: {due}\nDetails: {details}")
+    def to_dict(self):
+        return {
+            "subject": self.subject,
+            "due_date": self.due_date.isoformat() if self.due_date else "",
+            "details": self.details or ""
+        }
 
-def delete_homework(subject):
-    """Delete homework"""
-    file_path = os.path.join(homework_folder, f"{subject}.txt")
-    if os.path.exists(file_path):
-        os.remove(file_path)
+# Create tables automatically on startup (simple approach)
+with app.app_context():
+    db.create_all()
 
+# --- Helpers to parse date inputs ---
+def parse_date_input(value):
+    """
+    Accept either YYYY-MM-DD or DD/MM/YYYY (in case the frontend sometimes provides that).
+    Returns a datetime.date or None.
+    """
+    if not value:
+        return None
+    value = value.strip()
+    # try ISO first
+    try:
+        return datetime.date.fromisoformat(value)
+    except Exception:
+        pass
+    # try DD/MM/YYYY
+    try:
+        parts = value.split('/')
+        if len(parts) == 3:
+            d, m, y = parts
+            return datetime.date(int(y), int(m), int(d))
+    except Exception:
+        pass
+    return None
+
+def format_date_for_input(date_obj):
+    """Return YYYY-MM-DD for input[type=date] value (or empty)."""
+    if not date_obj:
+        return ""
+    return date_obj.isoformat()
+
+# --- Routes ---
 @app.route("/", methods=["GET", "POST"])
 def index():
-    subjects = ["-- New Subject --"] + get_homework_list()  # visible empty option
-
-    selected = request.args.get("subject", "").strip()
-    due_date = ""
-    details = ""
-
     if request.method == "POST":
-        subject = request.form.get("subject", "").strip()
-        due = request.form.get("due_date", "").strip()
-        details_text = request.form.get("details", "").strip()
+        subject = (request.form.get("subject") or "").strip()
+        due_in = (request.form.get("due_date") or "").strip()
+        details = (request.form.get("details") or "").strip()
 
-        # Add or update homework
+        # if adding/updating
         if "add" in request.form and subject:
-            save_homework(subject, due, details_text)
+            due_date = parse_date_input(due_in)
+            hw = Homework.query.filter_by(subject=subject).first()
+            if hw:
+                # update
+                hw.due_date = due_date
+                hw.details = details
+            else:
+                hw = Homework(subject=subject, due_date=due_date, details=details)
+                db.session.add(hw)
+            db.session.commit()
             return redirect(url_for("index", subject=subject))
 
-        # Delete homework
-        elif "delete" in request.form and subject:
-            delete_homework(subject)
+        # delete
+        if "delete" in request.form and subject:
+            Homework.query.filter_by(subject=subject).delete()
+            db.session.commit()
             return redirect(url_for("index"))
 
-    # Load selected subject if exists
+    # GET: read selected subject query param
+    selected = (request.args.get("subject") or "").strip()
+    # list all subjects (alphabetical)
+    subjects = [h.subject for h in Homework.query.order_by(Homework.subject).all()]
+    selected_due = ""
+    selected_details = ""
     if selected:
-        due_date, details = read_homework(selected)
-
-    return render_template(
-        "index.html",
-        subjects=subjects,
-        selected=selected,
-        due_date=due_date,
-        details=details
-    )
+        hw = Homework.query.filter_by(subject=selected).first()
+        if hw:
+            selected_due = format_date_for_input(hw.due_date)  # YYYY-MM-DD -> safe for input[type=date]
+            selected_details = hw.details or ""
+    return render_template("index.html",
+                           subjects=subjects,
+                           selected=selected,
+                           due_date=selected_due,
+                           details=selected_details)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
