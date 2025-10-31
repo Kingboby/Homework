@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Homework Recorder">
 <title>To-Do List</title>
 <style>
   body {
@@ -111,6 +116,24 @@
 </style>
 </head>
 <body>
+  <!-- Hamburger -->
+    <div class="hamburger" onclick="toggleNav()">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    
+    <!-- Overlay -->
+    <div id="overlay" onclick="toggleNav()"></div>
+    
+    <!-- Slide-over nav -->
+    <div id="mySidenav" class="sidenav">
+        <button onclick="location.href='/'">Homework</button>
+        <button onclick="location.href='/todo'">ToDo</button>
+        <button onclick="location.href='/timetable'">TimeTable</button>
+        <button>Coming Soon...</button>
+        
+    </div>
   <div class="todo-container">
     <h1>To-Do List</h1>
     <div class="input-row">
