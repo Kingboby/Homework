@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>To-Do List</title>
 <style>
   body {
@@ -68,8 +68,8 @@
     border-radius: 8px;
     font-size: 16px;
     position: relative;
-    transition: transform 0.2s ease;
-    touch-action: pan-y;
+    transition: transform 0.25s ease;
+    touch-action: none;
   }
 
   .handle {
@@ -77,6 +77,7 @@
     cursor: grab;
     padding: 0 10px;
     user-select: none;
+    touch-action: none;
   }
 
   .delete-btn {
@@ -97,6 +98,16 @@
     right: 10px;
     opacity: 1;
   }
+
+  .dragging {
+    z-index: 1000;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  .placeholder {
+    background: transparent;
+    border: 2px dashed #ccc;
+  }
 </style>
 </head>
 <body>
@@ -114,7 +125,6 @@ const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 
-// Add new task
 addTaskBtn.addEventListener('click', addTask);
 taskInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addTask(); } });
 
@@ -133,94 +143,93 @@ function addTask() {
   taskInput.value = '';
 }
 
-// Attach all listeners (drag + swipe)
 function attachTaskEvents(task) {
   const handle = task.querySelector('.handle');
   const deleteBtn = task.querySelector('.delete-btn');
-  let startY, offsetY, startIndex, dragging = false;
+  let startY, startX, dragging = false, swiping = false;
+  let placeholder = null;
 
-  // --- DRAG ---
-  handle.addEventListener('pointerdown', e => {
+  // --- DRAGGING ---
+  handle.addEventListener('touchstart', startDrag);
+  handle.addEventListener('mousedown', startDrag);
+
+  function startDrag(e) {
     e.preventDefault();
     dragging = true;
-    startY = e.clientY;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+
     const rect = task.getBoundingClientRect();
-    offsetY = e.clientY - rect.top;
-    startIndex = [...taskList.children].indexOf(task);
+    const offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
 
-    task.style.position = 'absolute';
-    task.style.width = rect.width + 'px';
-    task.style.zIndex = '1000';
-    task.classList.add('dragging');
-    document.body.appendChild(task);
-
-    moveAt(e.clientY);
-    function moveAt(y) {
-      task.style.top = y - offsetY + 'px';
-      task.style.left = rect.left + 'px';
-    }
-
-    function onMove(ev) {
-      if (!dragging) return;
-      moveAt(ev.clientY);
-      const children = [...taskList.children];
-      const middleY = ev.clientY;
-      let target = null;
-      for (let child of children) {
-        const box = child.getBoundingClientRect();
-        if (middleY > box.top && middleY < box.bottom) {
-          target = child;
-          break;
-        }
-      }
-      if (target && target !== task.placeholder) {
-        taskList.insertBefore(placeholder, target.nextSibling);
-      }
-    }
-
-    const placeholder = document.createElement('li');
+    placeholder = document.createElement('li');
     placeholder.className = 'task placeholder';
     placeholder.style.height = rect.height + 'px';
-    placeholder.style.visibility = 'hidden';
-    taskList.insertBefore(placeholder, taskList.children[startIndex]);
+    taskList.insertBefore(placeholder, task.nextSibling);
 
-    document.addEventListener('pointermove', onMove);
+    task.classList.add('dragging');
+    task.style.position = 'absolute';
+    task.style.width = rect.width + 'px';
+    task.style.left = rect.left + 'px';
+    task.style.top = rect.top + 'px';
 
-    document.addEventListener('pointerup', function onUp(ev) {
+    const moveHandler = ev => {
+      const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+      const deltaY = clientY - startY;
+      task.style.top = rect.top + deltaY + 'px';
+
+      const siblings = [...taskList.children].filter(c => c !== placeholder && c !== task);
+      for (let sib of siblings) {
+        const box = sib.getBoundingClientRect();
+        if (clientY < box.top + box.height / 2) {
+          taskList.insertBefore(placeholder, sib);
+          break;
+        }
+        if (sib === siblings[siblings.length - 1]) {
+          taskList.appendChild(placeholder);
+        }
+      }
+    };
+
+    const endHandler = () => {
       dragging = false;
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', endHandler);
+      document.removeEventListener('touchmove', moveHandler);
+      document.removeEventListener('touchend', endHandler);
+
       task.classList.remove('dragging');
       task.style.position = '';
-      task.style.zIndex = '';
+      task.style.width = '';
       task.style.left = '';
       task.style.top = '';
-      task.style.width = '';
       taskList.insertBefore(task, placeholder);
       placeholder.remove();
-    });
-  });
+    };
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', endHandler);
+    document.addEventListener('touchmove', moveHandler);
+    document.addEventListener('touchend', endHandler);
+  }
 
   // --- SWIPE TO DELETE ---
-  let startX = 0, moved = false;
   task.addEventListener('touchstart', e => {
     startX = e.touches[0].clientX;
-    moved = false;
+    swiping = false;
   });
 
   task.addEventListener('touchmove', e => {
     const dx = e.touches[0].clientX - startX;
     if (dx < -40) {
       task.classList.add('swiped');
-      moved = true;
+      swiping = true;
     }
     if (dx > 40 && task.classList.contains('swiped')) {
       task.classList.remove('swiped');
-      moved = true;
+      swiping = true;
     }
   });
 
-  // Delete button click
   deleteBtn.addEventListener('click', e => {
     e.stopPropagation();
     task.remove();
