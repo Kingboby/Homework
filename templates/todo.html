@@ -282,6 +282,12 @@
       if (nav.style.width === "250px") { nav.style.width = "0"; overlay.style.display = "none"; }
       else { nav.style.width = "250px"; overlay.style.display = "block"; }
     }
+      if (window.navigator.standalone === false) {
+    // User opened in Safari — redirect to PWA
+    if (document.referrer === "") {
+      window.location.href = "/"; // or your PWA home route
+    }
+  }
   </script>
 </body>
 </html>
