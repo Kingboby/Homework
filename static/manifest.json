@@ -1,7 +1,7 @@
 {
   "name": "Study App",
   "short_name": "StudyApp",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f5f5",
   "theme_color": "#f5f5f5",
@@ -18,3 +18,4 @@
     }
   ]
 }
+
