@@ -1,154 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .todo-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            width: 90%;
-            max-width: 420px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .input-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-
-        button.add-btn {
-            width: 48px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        button.add-btn:hover {
-            background-color: #0056b3;
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        li {
-            background: #f0f0f0;
-            margin-bottom: 10px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: grab;
-        }
-
-        li.dragging {
-            opacity: 0.4;
-        }
-
-        .handle {
-            font-size: 20px;
-            cursor: grab;
-            user-select: none;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>To-Do</title>
+<style>
+  :root{
+    --bg:#f5f5f5; --card:#fff; --accent:#007BFF; --muted:#f0f0f0; --danger:#dc3545;
+  }
+  html,body{height:100%; margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg);}
+  .todo-container{
+    width:90%; max-width:420px; margin:30px auto; background:var(--card);
+    padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08);
+  }
+  h1{text-align:center;margin:0 0 16px;color:#333}
+  .input-row{display:flex; gap:8px; margin-bottom:16px}
+  #taskInput{flex:1;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:15px}
+  .add-btn{width:50px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:22px;cursor:pointer}
+  .add-btn:active{transform:scale(.98)}
+  ul#taskList{list-style:none;padding:0;margin:0}
+  /* item container to support swipe + delete button */
+  .task-wrap{position:relative; overflow:visible}
+  .task{
+    background:var(--muted); margin-bottom:10px; border-radius:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; box-sizing:border-box; user-select:none;
+    transition:transform 180ms ease, box-shadow 120ms ease;
+    touch-action: pan-y;
+  }
+  .task.dragging{opacity:0.5; box-shadow:0 8px 20px rgba(0,0,0,0.08)}
+  .task .text{flex:1; padding-right:10px; word-break:break-word}
+  .handle{
+    width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:8px; background:rgba(0,0,0,0.06); cursor:grab; margin-left:8px;
+    user-select:none; -webkit-user-select:none;
+  }
+  .handle:active{cursor:grabbing}
+  /* delete button that sits to the right (hidden by default) */
+  .delete-btn{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:var(--danger); color:#fff; border:none; padding:8px 12px;
+    border-radius:8px; display:none; z-index:5; font-weight:bold; cursor:pointer;
+  }
+  .delete-show .delete-btn{display:block}
+  /* when revealed by swipe we push the task left to show delete */
+  .swiped { transform: translateX(-110px); }
+  /* small hint for mobile - make handle more touch friendly */
+  @media (max-width:480px){
+    .handle{width:42px;height:42px;font-size:18px}
+    .add-btn{width:56px}
+  }
+</style>
 </head>
 <body>
-<div class="todo-container">
-    <h1>To-Do List</h1>
+  <div class="todo-container">
+    <h1>To-Do</h1>
     <div class="input-row">
-        <input type="text" id="taskInput" placeholder="Enter a new task...">
-        <button class="add-btn" id="addTaskBtn">+</button>
+      <input id="taskInput" type="text" placeholder="Enter a new task...">
+      <button id="addTaskBtn" class="add-btn">+</button>
     </div>
-    <ul id="taskList"></ul>
-</div>
+
+    <ul id="taskList" aria-live="polite"></ul>
+  </div>
 
 <script>
-    const taskInput = document.getElementById("taskInput");
-    const addTaskBtn = document.getElementById("addTaskBtn");
-    const taskList = document.getElementById("taskList");
+/* ======= basic add task behavior ======= */
+const taskInput = document.getElementById('taskInput');
+const addTaskBtn = document.getElementById('addTaskBtn');
+const taskList = document.getElementById('taskList');
 
-    addTaskBtn.addEventListener("click", addTask);
-    taskInput.addEventListener("keypress", e => {
-        if (e.key === "Enter") addTask();
-    });
+addTaskBtn.addEventListener('click', addTask);
+taskInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addTask(); } });
 
-    function addTask() {
-        const taskText = taskInput.value.trim();
-        if (!taskText) return;
+function addTask(){
+  const text = taskInput.value.trim();
+  if(!text) return;
+  const liWrap = document.createElement('li'); liWrap.className = 'task-wrap';
+  const li = document.createElement('div'); li.className = 'task';
+  li.setAttribute('draggable','true');
 
-        const li = document.createElement("li");
-        li.draggable = true;
-        li.innerHTML = `
-            <span>${taskText}</span>
-            <span class="handle">☰</span>
-        `;
+  li.innerHTML = `<div class="text">${escapeHtml(text)}</div>
+                  <div class="handle" aria-hidden="true">☰</div>`;
+  // delete button element (positioned absolutely)
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delete-btn';
+  delBtn.textContent = 'Delete';
+  delBtn.addEventListener('click', () => { liWrap.remove(); });
 
-        addDragEvents(li);
-        taskList.appendChild(li);
-        taskInput.value = "";
+  liWrap.appendChild(li);
+  liWrap.appendChild(delBtn);
+
+  attachItemEvents(liWrap, li, delBtn);
+  taskList.appendChild(liWrap);
+  taskInput.value = '';
+  taskInput.focus();
+}
+
+/* simple escape to avoid HTML injection */
+function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* ======= Reordering: HTML5 drag for mouse + touch fallback ======= */
+
+/* HTML5 drag: compute insertion position by pointer Y */
+taskList.addEventListener('dragover', e => {
+  e.preventDefault();
+  const after = getDragAfterElement(taskList, e.clientY);
+  const dragging = document.querySelector('.dragging');
+  if(!dragging) return;
+  if(after == null){
+    taskList.appendChild(dragging.parentElement);
+  } else {
+    taskList.insertBefore(dragging.parentElement, after.parentElement);
+  }
+});
+
+function getDragAfterElement(container, y){
+  const items = [...container.querySelectorAll('.task')].filter(i=>!i.classList.contains('dragging'));
+  let closest = null;
+  let closestOffset = Number.NEGATIVE_INFINITY;
+  for(const item of items){
+    const box = item.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    if(offset > closestOffset){
+      closestOffset = offset;
+      closest = item;
     }
+  }
+  return closest; // may be null
+}
 
-    // --- Drag and drop reorder ---
-    let draggedItem = null;
+/* ======= Touch-based drag (handle) & swipe-to-delete ======= */
 
-    function addDragEvents(li) {
-        li.addEventListener("dragstart", () => {
-            draggedItem = li;
-            li.classList.add("dragging");
-        });
-        li.addEventListener("dragend", () => {
-            draggedItem = null;
-            li.classList.remove("dragging");
-        });
-        li.addEventListener("dragover", e => e.preventDefault());
-        li.addEventListener("drop", e => {
-            e.preventDefault();
-            if (draggedItem && draggedItem !== li) {
-                const items = Array.from(taskList.children);
-                const draggedIndex = items.indexOf(draggedItem);
-                const droppedIndex = items.indexOf(li);
-                if (draggedIndex < droppedIndex) {
-                    li.after(draggedItem);
-                } else {
-                    li.before(draggedItem);
-                }
-            }
-        });
+function attachItemEvents(wrapper, item, deleteBtn){
+  // Mouse/HTML5 drag handlers
+  item.addEventListener('dragstart', e => {
+    item.classList.add('dragging');
+    // small data to allow drag
+    e.dataTransfer.setData('text/plain', '');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  item.addEventListener('dragend', () => { item.classList.remove('dragging'); });
+
+  // Find handle element
+  const handle = item.querySelector('.handle');
+
+  /* --- TOUCH reordering when dragging the handle (mobile) --- */
+  let touchDrag = { active:false, startY:0, placeholder:null, origin:null, lastOver:null };
+  handle.addEventListener('pointerdown', (ev) => {
+    // only start pointer drag with primary button/touch
+    if(ev.pointerType === 'mouse' && ev.button !== 0) return;
+    // if it's a touch or pen, start custom drag
+    handle.setPointerCapture(ev.pointerId);
+    touchDrag.active = true;
+    touchDrag.startY = ev.clientY;
+    touchDrag.origin = wrapper;
+    originStartWrapperDrag(wrapper);
+  });
+  handle.addEventListener('pointermove', (ev) => {
+    if(!touchDrag.active) return;
+    // determine element under pointer
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const nearestLi = el ? el.closest('.task') : null;
+    if(nearestLi && nearestLi !== touchDrag.lastOver && nearestLi !== item){
+      touchDrag.lastOver = nearestLi;
+      // insert before/after based on position
+      const listItems = Array.from(taskList.querySelectorAll('.task'));
+      const origin = item;
+      const target = nearestLi;
+      const originIndex = listItems.indexOf(origin);
+      const targetIndex = listItems.indexOf(target);
+      if(originIndex < targetIndex){
+        target.parentElement.after(origin.parentElement);
+      } else {
+        target.parentElement.before(origin.parentElement);
+      }
     }
+  });
+  handle.addEventListener('pointerup', (ev) => {
+    if(!touchDrag.active) return;
+    touchDrag.active = false;
+    handle.releasePointerCapture(ev.pointerId);
+    item.classList.remove('dragging');
+    cleanupWrapperDrag(wrapper);
+  });
+  handle.addEventListener('pointercancel', (ev) => {
+    if(!touchDrag.active) return;
+    touchDrag.active = false;
+    handle.releasePointerCapture(ev.pointerId);
+    item.classList.remove('dragging');
+    cleanupWrapperDrag(wrapper);
+  });
+
+  /* --- SWIPE LEFT logic (for revealing delete) --- */
+  // swipe variables
+  let sw = { startX:0, startY:0, curX:0, active:false, swiped:false };
+  wrapper.addEventListener('touchstart', function(e){
+    if(e.touches.length > 1) return;
+    sw.active = true;
+    sw.swiped = wrapper.classList.contains('delete-show');
+    sw.startX = e.touches[0].clientX;
+    sw.startY = e.touches[0].clientY;
+    // ensure no conflict with potential handle drag
+  }, {passive:true});
+
+  wrapper.addEventListener('touchmove', function(e){
+    if(!sw.active) return;
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = x - sw.startX;
+    const dy = y - sw.startY;
+    // if vertical movement dominating, ignore swipe (allow scrolling)
+    if(Math.abs(dy) > Math.abs(dx)) return;
+    // horizontal move: prevent default to stop page from moving
+    e.preventDefault();
+    sw.curX = dx;
+    // only allow left swipe (negative dx) or small positive to close
+    const translate = Math.min(0, dx);
+    wrapper.querySelector('.task').style.transform = `translateX(${translate}px)`;
+    // if move passes threshold show delete on release
+  }, {passive:false});
+
+  wrapper.addEventListener('touchend', function(e){
+    if(!sw.active) return;
+    sw.active = false;
+    const threshold = -80;
+    const final = sw.curX || 0;
+    const taskEl = wrapper.querySelector('.task');
+    if(final <= threshold){
+      // reveal delete
+      wrapper.classList.add('delete-show');
+      taskEl.classList.add('swiped');
+    } else {
+      // hide delete / reset
+      wrapper.classList.remove('delete-show');
+      taskEl.classList.remove('swiped');
+      taskEl.style.transform = '';
+    }
+    sw.curX = 0;
+  });
+
+  // clicking delete already wired earlier; also allow mouse drag of delete:
+  // add double-click to delete as fallback
+  deleteBtn.addEventListener('dblclick', () => wrapper.remove());
+
+  // Also allow desktop users to click the task to close delete
+  wrapper.addEventListener('click', (ev) => {
+    // if clicking outside delete button and delete is shown, hide it
+    if(wrapper.classList.contains('delete-show') && !ev.target.closest('.delete-btn')){
+      wrapper.classList.remove('delete-show');
+      wrapper.querySelector('.task').classList.remove('swiped');
+      wrapper.querySelector('.task').style.transform = '';
+    }
+  });
+}
+
+/* helper during pointer handle drag to show dragging style */
+function originStartWrapperDrag(wrapper){
+  const item = wrapper.querySelector('.task');
+  item.classList.add('dragging');
+}
+function cleanupWrapperDrag(wrapper){
+  const item = wrapper.querySelector('.task');
+  item.classList.remove('dragging');
+}
+
+/* utility for initial items if you want sample tasks */
+const samples = ['Finish maths worksheet','Study biology notes','Buy groceries'];
+samples.forEach(t => { taskInput.value = t; addTask(); });
+
 </script>
 </body>
 </html>
