@@ -3,252 +3,229 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>To-Do</title>
+<title>To-Do List</title>
 <style>
-  :root{
-    --bg:#f5f5f5; --card:#fff; --accent:#007BFF; --muted:#f0f0f0; --danger:#dc3545;
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 0;
   }
-  html,body{height:100%; margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg);}
-  .todo-container{width:90%; max-width:420px; margin:30px auto; background:var(--card);
-    padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08);}
-  h1{text-align:center;margin:0 0 16px;color:#333}
-  .input-row{display:flex; gap:8px; margin-bottom:16px}
-  #taskInput{flex:1;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:15px}
-  .add-btn{width:50px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:22px;cursor:pointer}
-  .add-btn:active{transform:scale(.98)}
-  ul#taskList{list-style:none;padding:0;margin:0}
-  .task-wrap{position:relative; overflow:visible}
-  .task{
-    background:var(--muted); margin-bottom:10px; border-radius:10px;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 14px; box-sizing:border-box; user-select:none;
-    transition:transform 180ms ease, box-shadow 120ms ease;
+
+  .todo-container {
+    width: 90%;
+    max-width: 420px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  #taskInput {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  .add-btn {
+    width: 48px;
+    font-size: 24px;
+    color: white;
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .task {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0f0f0;
+    margin-bottom: 10px;
+    padding: 14px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    position: relative;
+    transition: transform 0.2s ease;
     touch-action: pan-y;
   }
-  .task.dragging{opacity:0.5; box-shadow:0 8px 20px rgba(0,0,0,0.08)}
-  .task .text{flex:1; padding-right:10px; word-break:break-word}
-  .handle{
-    width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
-    border-radius:8px; background:rgba(0,0,0,0.06); cursor:grab; margin-left:8px;
-    user-select:none; -webkit-user-select:none;
+
+  .handle {
+    font-size: 22px;
+    cursor: grab;
+    padding: 0 10px;
+    user-select: none;
   }
-  .handle:active{cursor:grabbing}
-  .delete-btn{
-    position:absolute; right:10px; top:50%; transform:translateY(-50%);
-    background:var(--danger); color:#fff; border:none; padding:8px 12px;
-    border-radius:8px; display:none; z-index:5; font-weight:bold; cursor:pointer;
+
+  .delete-btn {
+    position: absolute;
+    right: -80px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: all 0.3s ease;
   }
-  .delete-show .delete-btn{display:block}
-  .swiped { transform: translateX(-110px); }
-  @media (max-width:480px){
-    .handle{width:42px;height:42px;font-size:18px}
-    .add-btn{width:56px}
+
+  .swiped .delete-btn {
+    right: 10px;
+    opacity: 1;
   }
 </style>
 </head>
 <body>
   <div class="todo-container">
-    <h1>To-Do</h1>
+    <h1>To-Do List</h1>
     <div class="input-row">
       <input id="taskInput" type="text" placeholder="Enter a new task...">
       <button id="addTaskBtn" class="add-btn">+</button>
     </div>
-
-    <ul id="taskList" aria-live="polite"></ul>
+    <ul id="taskList"></ul>
   </div>
 
 <script>
-/* ======= setup ======= */
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 
+// Add new task
 addTaskBtn.addEventListener('click', addTask);
 taskInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addTask(); } });
 
-function addTask(){
+function addTask() {
   const text = taskInput.value.trim();
-  if(!text) return;
-  const liWrap = document.createElement('li'); liWrap.className = 'task-wrap';
-  const li = document.createElement('div'); li.className = 'task';
-  li.setAttribute('draggable','false'); // item itself not draggable; handle will be
-  li.innerHTML = `<div class="text">${escapeHtml(text)}</div>
-                  <div class="handle" aria-hidden="true" draggable="true">☰</div>`;
-  const delBtn = document.createElement('button');
-  delBtn.className = 'delete-btn';
-  delBtn.textContent = 'Delete';
-  // delete click: remove wrapper; stop propagation so other handlers don't hide it first
-  delBtn.addEventListener('click', (ev) => { ev.stopPropagation(); liWrap.remove(); });
-  liWrap.appendChild(li);
-  liWrap.appendChild(delBtn);
-
-  attachItemEvents(liWrap, li, delBtn);
-  taskList.appendChild(liWrap);
+  if (!text) return;
+  const li = document.createElement('li');
+  li.className = 'task';
+  li.innerHTML = `
+    <span class="text">${text}</span>
+    <span class="handle">☰</span>
+    <button class="delete-btn">Delete</button>
+  `;
+  taskList.appendChild(li);
+  attachTaskEvents(li);
   taskInput.value = '';
-  taskInput.focus();
-}
-function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-
-/* ======= HTML5 drag + get insertion ======= */
-let draggedItem = null; // actual .task element being dragged
-
-// when dragging over list, compute insertion based on pointer Y
-taskList.addEventListener('dragover', e => {
-  e.preventDefault();
-  const after = getDragAfterElement(taskList, e.clientY);
-  if(!draggedItem) return;
-  if(after == null){
-    taskList.appendChild(draggedItem.parentElement);
-  } else {
-    taskList.insertBefore(draggedItem.parentElement, after.parentElement);
-  }
-});
-
-function getDragAfterElement(container, y){
-  const items = [...container.querySelectorAll('.task')].filter(i=>i !== draggedItem);
-  let closest = null;
-  let closestOffset = Number.POSITIVE_INFINITY;
-  for(const item of items){
-    const box = item.getBoundingClientRect();
-    const offset = Math.abs(y - (box.top + box.height/2));
-    if(offset < closestOffset){
-      closestOffset = offset;
-      closest = item;
-    }
-  }
-  return closest;
 }
 
-/* ======= Attach events to an item wrapper ======= */
-function attachItemEvents(wrapper, item, deleteBtn){
-  // HTML5 drag uses the handle, not the whole item (so user grabs handle)
-  const handle = item.querySelector('.handle');
+// Attach all listeners (drag + swipe)
+function attachTaskEvents(task) {
+  const handle = task.querySelector('.handle');
+  const deleteBtn = task.querySelector('.delete-btn');
+  let startY, offsetY, startIndex, dragging = false;
 
-  // handle dragstart => set draggedItem and style
-  handle.addEventListener('dragstart', (e) => {
-    // find the .task element
-    draggedItem = item;
-    item.classList.add('dragging');
-    try { e.dataTransfer.setData('text/plain',''); } catch (err) {}
-    e.dataTransfer.effectAllowed = 'move';
-  });
+  // --- DRAG ---
+  handle.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    dragging = true;
+    startY = e.clientY;
+    const rect = task.getBoundingClientRect();
+    offsetY = e.clientY - rect.top;
+    startIndex = [...taskList.children].indexOf(task);
 
-  handle.addEventListener('dragend', () => {
-    if(draggedItem) draggedItem.classList.remove('dragging');
-    draggedItem = null;
-  });
+    task.style.position = 'absolute';
+    task.style.width = rect.width + 'px';
+    task.style.zIndex = '1000';
+    task.classList.add('dragging');
+    document.body.appendChild(task);
 
-  // Also support dragging via mouse on entire task for convenience
-  item.addEventListener('dragstart', (e) => {
-    // only set if draggedItem hasn't been set by handle
-    if(!draggedItem){
-      draggedItem = item;
-      item.classList.add('dragging');
-      try { e.dataTransfer.setData('text/plain',''); } catch (err) {}
-      e.dataTransfer.effectAllowed = 'move';
+    moveAt(e.clientY);
+    function moveAt(y) {
+      task.style.top = y - offsetY + 'px';
+      task.style.left = rect.left + 'px';
     }
-  });
-  item.addEventListener('dragend', () => {
-    if(item) item.classList.remove('dragging');
-    draggedItem = null;
-  });
 
-  /* --- TOUCH reordering (pointer) when pressing handle --- */
-  let touchDrag = { active:false, origin:null, lastOver:null };
-  handle.addEventListener('pointerdown', (ev) => {
-    if(ev.pointerType === 'mouse' && ev.button !== 0) return;
-    handle.setPointerCapture(ev.pointerId);
-    touchDrag.active = true;
-    touchDrag.origin = wrapper;
-    // visual cue
-    item.classList.add('dragging');
-  });
-  handle.addEventListener('pointermove', (ev) => {
-    if(!touchDrag.active) return;
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    const nearestLi = el ? el.closest('.task') : null;
-    if(nearestLi && nearestLi !== touchDrag.lastOver && nearestLi !== item){
-      touchDrag.lastOver = nearestLi;
-      const items = Array.from(taskList.querySelectorAll('.task'));
-      const originIndex = items.indexOf(item);
-      const targetIndex = items.indexOf(nearestLi);
-      if(originIndex < targetIndex){
-        nearestLi.parentElement.after(item.parentElement);
-      } else {
-        nearestLi.parentElement.before(item.parentElement);
+    function onMove(ev) {
+      if (!dragging) return;
+      moveAt(ev.clientY);
+      const children = [...taskList.children];
+      const middleY = ev.clientY;
+      let target = null;
+      for (let child of children) {
+        const box = child.getBoundingClientRect();
+        if (middleY > box.top && middleY < box.bottom) {
+          target = child;
+          break;
+        }
+      }
+      if (target && target !== task.placeholder) {
+        taskList.insertBefore(placeholder, target.nextSibling);
       }
     }
-  });
-  handle.addEventListener('pointerup', (ev) => {
-    if(!touchDrag.active) return;
-    touchDrag.active = false;
-    handle.releasePointerCapture(ev.pointerId);
-    item.classList.remove('dragging');
-  });
-  handle.addEventListener('pointercancel', (ev) => {
-    if(!touchDrag.active) return;
-    touchDrag.active = false;
-    handle.releasePointerCapture(ev.pointerId);
-    item.classList.remove('dragging');
+
+    const placeholder = document.createElement('li');
+    placeholder.className = 'task placeholder';
+    placeholder.style.height = rect.height + 'px';
+    placeholder.style.visibility = 'hidden';
+    taskList.insertBefore(placeholder, taskList.children[startIndex]);
+
+    document.addEventListener('pointermove', onMove);
+
+    document.addEventListener('pointerup', function onUp(ev) {
+      dragging = false;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      task.classList.remove('dragging');
+      task.style.position = '';
+      task.style.zIndex = '';
+      task.style.left = '';
+      task.style.top = '';
+      task.style.width = '';
+      taskList.insertBefore(task, placeholder);
+      placeholder.remove();
+    });
   });
 
-  /* --- SWIPE LEFT to reveal delete (touch) --- */
-  let sw = { active:false, startX:0, startY:0, curX:0 };
-  wrapper.addEventListener('touchstart', function(e){
-    if(e.touches.length > 1) return;
-    sw.active = true;
-    sw.startX = e.touches[0].clientX;
-    sw.startY = e.touches[0].clientY;
-  }, {passive:true});
+  // --- SWIPE TO DELETE ---
+  let startX = 0, moved = false;
+  task.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    moved = false;
+  });
 
-  wrapper.addEventListener('touchmove', function(e){
-    if(!sw.active) return;
-    const x = e.touches[0].clientX;
-    const y = e.touches[0].clientY;
-    const dx = x - sw.startX;
-    const dy = y - sw.startY;
-    if(Math.abs(dy) > Math.abs(dx)) return; // vertical -> ignore
-    e.preventDefault();
-    sw.curX = dx;
-    const translate = Math.min(0, dx);
-    wrapper.querySelector('.task').style.transform = `translateX(${translate}px)`;
-  }, {passive:false});
-
-  wrapper.addEventListener('touchend', function(e){
-    if(!sw.active) return;
-    sw.active = false;
-    const threshold = -80;
-    const final = sw.curX || 0;
-    const taskEl = wrapper.querySelector('.task');
-    if(final <= threshold){
-      wrapper.classList.add('delete-show');
-      taskEl.classList.add('swiped');
-    } else {
-      wrapper.classList.remove('delete-show');
-      taskEl.classList.remove('swiped');
-      taskEl.style.transform = '';
+  task.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - startX;
+    if (dx < -40) {
+      task.classList.add('swiped');
+      moved = true;
     }
-    sw.curX = 0;
-  });
-
-  // prevent wrapper click from hiding delete when clicking delete btn — handled by stopPropagation on deleteBtn
-  wrapper.addEventListener('click', (ev) => {
-    if(wrapper.classList.contains('delete-show') && !ev.target.closest('.delete-btn')){
-      // hide delete if clicking outside delete button
-      wrapper.classList.remove('delete-show');
-      wrapper.querySelector('.task').classList.remove('swiped');
-      wrapper.querySelector('.task').style.transform = '';
+    if (dx > 40 && task.classList.contains('swiped')) {
+      task.classList.remove('swiped');
+      moved = true;
     }
   });
 
-  // Allow keyboard delete via Enter on deleteBtn
-  deleteBtn.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); deleteBtn.click(); }
+  // Delete button click
+  deleteBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    task.remove();
   });
 }
-
-/* sample tasks for testing */
-['Finish maths worksheet','Study biology notes','Buy groceries'].forEach(t => { taskInput.value = t; addTask(); });
 </script>
 </body>
 </html>
