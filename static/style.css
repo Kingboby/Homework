@@ -1,4 +1,4 @@
-/* ===== Global Styles ===== */
+/* ------------------------- GLOBAL ------------------------- */
 html, body {
     margin: 0;
     padding: 0;
@@ -11,17 +11,10 @@ html, body {
     align-items: center;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    touch-action: manipulation; /* Default, overridden for interactive elements */
-    box-sizing: border-box;
+    touch-action: manipulation; /* default for mobile interactions */
 }
 
-*,
-*:before,
-*:after {
-    box-sizing: inherit;
-}
-
-/* ===== Containers ===== */
+/* ------------------------- CONTAINER ------------------------- */
 .container {
     width: 90%;
     max-width: 420px;
@@ -32,83 +25,42 @@ html, body {
     text-align: center;
 }
 
-/* ===== Headings ===== */
 h1 {
     margin-bottom: 20px;
     color: #333;
 }
 
-/* ===== Inputs & Buttons ===== */
-input, textarea, button {
-    font-family: Arial, sans-serif;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    padding: 14px;
-    margin: 8px 0;
-    width: 100%;
-    box-sizing: border-box;
-    touch-action: auto; /* Ensure buttons and input are clickable on mobile */
-}
-
-input[list] {
-    font-size: 18px;
-    padding: 16px;
-}
-
-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    touch-action: auto;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-.add-btn {
-    width: 48px;
-    font-size: 24px;
-    border-radius: 8px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    touch-action: auto;
-}
-
-.delete {
-    background-color: #dc3545;
-}
-
-.delete:hover {
-    background-color: #b02a37;
-}
-
-/* ===== Homework Specific ===== */
-.date-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-}
-
+/* ------------------------- INPUT ROW ------------------------- */
 .input-row {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
 }
 
-/* ===== Lists ===== */
-ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+#taskInput {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    touch-action: auto; /* allow taps/clicks */
 }
 
-/* ===== To-Do Task Items ===== */
+.add-btn {
+    width: 48px;
+    font-size: 24px;
+    color: white;
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: auto; /* allow taps/clicks */
+}
+
+/* ------------------------- TASK LIST ------------------------- */
+ul { list-style: none; padding: 0; margin: 0; }
+
 .task {
     display: flex;
     align-items: center;
@@ -120,8 +72,7 @@ ul {
     font-size: 16px;
     position: relative;
     transition: transform 0.25s ease;
-    touch-action: pan-y; /* allows vertical scroll but disables horizontal */
-    will-change: transform;
+    touch-action: pan-y; /* allow vertical scrolling while enabling drag */
 }
 
 .handle {
@@ -129,17 +80,7 @@ ul {
     cursor: grab;
     padding: 0 10px;
     user-select: none;
-    touch-action: none; /* prevents mobile scrolling while dragging */
-}
-
-.dragging {
-    z-index: 1000;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.placeholder {
-    background: transparent;
-    border: 2px dashed #ccc;
+    touch-action: none; /* only the handle disables touch scroll for dragging */
 }
 
 .delete-btn {
@@ -154,7 +95,7 @@ ul {
     border-radius: 8px;
     opacity: 0;
     transition: all 0.3s ease;
-    touch-action: auto; /* make sure button is clickable */
+    touch-action: auto; /* allow tap/click */
 }
 
 .swiped .delete-btn {
@@ -162,14 +103,23 @@ ul {
     opacity: 1;
 }
 
-/* ===== Navigation Hamburger ===== */
+.dragging {
+    z-index: 1000;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.placeholder {
+    background: transparent;
+    border: 2px dashed #ccc;
+}
+
+/* ------------------------- HAMBURGER / NAV ------------------------- */
 .hamburger {
     position: fixed;
     top: 15px;
     left: 20px;
     cursor: pointer;
     z-index: 2;
-    touch-action: auto; /* allow taps */
 }
 
 .hamburger div {
@@ -179,7 +129,6 @@ ul {
     margin: 6px 0;
 }
 
-/* ===== Slide-Over Nav ===== */
 .sidenav {
     height: 100%;
     width: 0;
@@ -191,7 +140,7 @@ ul {
     transition: 0.3s;
     padding-top: 60px;
     box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 1; /* slides over content */
 }
 
 .sidenav button {
@@ -207,10 +156,10 @@ ul {
     color: black;
     font-family: Arial, sans-serif;
     font-weight: bold;
-    touch-action: auto;
+    touch-action: auto; /* allow tap/click */
 }
 
-/* ===== Overlay when nav open ===== */
+/* ------------------------- OVERLAY ------------------------- */
 #overlay {
     position: fixed;
     top: 0;
@@ -220,5 +169,5 @@ ul {
     background: rgba(0,0,0,0.3);
     display: none;
     z-index: 0;
-    touch-action: auto;
+    touch-action: auto; /* allow tap to close nav */
 }
