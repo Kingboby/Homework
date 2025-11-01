@@ -58,52 +58,79 @@
     }
 
     function attachTaskEvents(task) {
-      const handle = task.querySelector('.handle');
-      const deleteBtn = task.querySelector('.delete-btn');
-      let startY, startX, placeholder = null;
+  const handle = task.querySelector('.handle');
+  const deleteBtn = task.querySelector('.delete-btn');
+  let startY, startX, placeholder = null;
 
-      // DRAGGING
-      handle.addEventListener('touchstart', startDrag);
-      handle.addEventListener('mousedown', startDrag);
-      function startDrag(e) {
-        e.preventDefault();
-        startY = e.touches ? e.touches[0].clientY : e.clientY;
-        const rect = task.getBoundingClientRect();
-        placeholder = document.createElement('li');
-        placeholder.className = 'task placeholder';
-        placeholder.style.height = rect.height + 'px';
-        taskList.insertBefore(placeholder, task.nextSibling);
-        task.classList.add('dragging');
-        task.style.position = 'absolute';
-        task.style.width = rect.width + 'px';
-        task.style.left = rect.left + 'px';
-        task.style.top = rect.top + 'px';
-        const moveHandler = ev => {
-          const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
-          const deltaY = clientY - startY;
-          task.style.top = rect.top + deltaY + 'px';
-          const siblings = [...taskList.children].filter(c => c !== placeholder && c !== task);
-          for (let sib of siblings) {
-            const box = sib.getBoundingClientRect();
-            if (clientY < box.top + box.height / 2) { taskList.insertBefore(placeholder, sib); break; }
-            if (sib === siblings[siblings.length - 1]) taskList.appendChild(placeholder);
-          }
-        };
-        const endHandler = () => {
-          document.removeEventListener('mousemove', moveHandler);
-          document.removeEventListener('mouseup', endHandler);
-          document.removeEventListener('touchmove', moveHandler);
-          document.removeEventListener('touchend', endHandler);
-          task.classList.remove('dragging');
-          task.style = '';
-          taskList.insertBefore(task, placeholder);
-          placeholder.remove();
-        };
-        document.addEventListener('mousemove', moveHandler);
-        document.addEventListener('mouseup', endHandler);
-        document.addEventListener('touchmove', moveHandler);
-        document.addEventListener('touchend', endHandler);
+  // DRAGGING
+  const startDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isTouch = e.type.startsWith('touch');
+    startY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    const rect = task.getBoundingClientRect();
+    placeholder = document.createElement('li');
+    placeholder.className = 'task placeholder';
+    placeholder.style.height = rect.height + 'px';
+    taskList.insertBefore(placeholder, task.nextSibling);
+
+    task.classList.add('dragging');
+    task.style.position = 'absolute';
+    task.style.width = rect.width + 'px';
+    task.style.left = rect.left + 'px';
+    task.style.top = rect.top + 'px';
+
+    const moveHandler = (ev) => {
+      if (isTouch) ev.preventDefault(); // prevent scrolling
+      const clientY = isTouch ? ev.touches[0].clientY : ev.clientY;
+      const deltaY = clientY - startY;
+      task.style.top = rect.top + deltaY + 'px';
+
+      const siblings = [...taskList.children].filter(c => c !== placeholder && c !== task);
+      for (let sib of siblings) {
+        const box = sib.getBoundingClientRect();
+        if (clientY < box.top + box.height / 2) {
+          taskList.insertBefore(placeholder, sib);
+          break;
+        }
+        if (sib === siblings[siblings.length - 1]) taskList.appendChild(placeholder);
       }
+    };
+
+    const endHandler = () => {
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', endHandler);
+      document.removeEventListener('touchmove', moveHandler);
+      document.removeEventListener('touchend', endHandler);
+
+      task.classList.remove('dragging');
+      task.style = '';
+      taskList.insertBefore(task, placeholder);
+      placeholder.remove();
+    };
+
+    document.addEventListener('mousemove', moveHandler, { passive: false });
+    document.addEventListener('mouseup', endHandler);
+    document.addEventListener('touchmove', moveHandler, { passive: false });
+    document.addEventListener('touchend', endHandler);
+  };
+
+  handle.addEventListener('mousedown', startDrag);
+  handle.addEventListener('touchstart', startDrag, { passive: false });
+
+  // SWIPE TO DELETE
+  task.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+  task.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - startX;
+    if (dx < -40) task.classList.add('swiped');
+    if (dx > 40) task.classList.remove('swiped');
+  });
+
+  deleteBtn.addEventListener('click', e => task.remove());
+}
+
 
       // SWIPE TO DELETE
       task.addEventListener('touchstart', e => startX = e.touches[0].clientX);
