@@ -203,8 +203,9 @@ html, body {
       cursor: grab;
       padding: 0 10px;
       user-select: none;
-      
+      touch-action: none; /* Prevent Safari scrolling interference */
     }
+
 
     .delete-btn {
       position: absolute;
