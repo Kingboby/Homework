@@ -6,13 +6,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#f5f5f5">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 
   <title>To-Do List</title>
 
-
+  
 </head>
 
 <body>
@@ -37,7 +34,7 @@
     <ul id="taskList"></ul>
   </div>
 
-  <script src="{{ url_for('static', filename='todo.js') }}">
+  <script>
     // Same JS as before + toggleNav
     const taskInput = document.getElementById('taskInput');
     const addTaskBtn = document.getElementById('addTaskBtn');
@@ -127,11 +124,6 @@
       window.location.href = "/"; // or your PWA home route
     }
   }
-
-    const tasksContainer = document.getElementById("taskList");
-    const addButton = document.getElementById("addBtn");
-    const taskInput = document.getElementById("taskInput");
-
   </script>
 </body>
 </html>
