@@ -291,3 +291,13 @@ html, body {
       display: none;
       z-index: 0;
     }
+
+    .task {
+      transition: transform 0.15s ease;
+      will-change: transform;
+      touch-action: pan-y;
+    }
+    .handle {
+      touch-action: none;
+    }
+    
