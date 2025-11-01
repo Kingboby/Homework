@@ -163,6 +163,113 @@
       z-index: 0;
     }
 
+#home
+
+
+/* Homework Page Styles */
+.homework-container {
+  width: 90%;
+  max-width: 500px;
+  background: #fffde7; /* pale yellow background for homework page */
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: left;
+  font-family: Arial, sans-serif;
+  margin: 20px auto;
+}
+
+.homework-container h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #444;
+  text-align: center;
+}
+
+.homework-container h2 {
+  font-size: 22px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.homework-container .homework-list {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.homework-container .homework-list li {
+  font-size: 16px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ccc;
+}
+
+.homework-container .homework-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.homework-container input.homework-input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.homework-container button.homework-add-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.homework-container button.homework-add-btn:hover {
+  background-color: #218838;
+}
+
+.homework-container .subject-label {
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.homework-container .due-date {
+  font-size: 14px;
+  color: #777;
+  margin-left: 6px;
+}
+
+.homework-container .homework-task {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 8px;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.homework-container .homework-task button.delete-homework {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.homework-container .homework-task button.delete-homework:hover {
+  background-color: #b02a37;
+}
+
 
 #HOMEWORK
 
