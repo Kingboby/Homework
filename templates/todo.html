@@ -37,7 +37,7 @@
     <ul id="taskList"></ul>
   </div>
 
-  <script>
+  <script src="{{ url_for('static', filename='todo.js') }}">
     // Same JS as before + toggleNav
     const taskInput = document.getElementById('taskInput');
     const addTaskBtn = document.getElementById('addTaskBtn');
@@ -127,6 +127,11 @@
       window.location.href = "/"; // or your PWA home route
     }
   }
+
+    const tasksContainer = document.getElementById("taskList");
+    const addButton = document.getElementById("addBtn");
+    const taskInput = document.getElementById("taskInput");
+
   </script>
 </body>
 </html>
