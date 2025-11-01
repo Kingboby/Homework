@@ -167,6 +167,7 @@
 
 
 /* Homework Page Styles */
+/* Homework Page Styles */
 .homework-container {
   width: 90%;
   max-width: 500px;
@@ -193,34 +194,60 @@
   color: #555;
 }
 
-.homework-container .homework-list {
-  list-style-type: disc;
-  padding-left: 20px;
-  margin-bottom: 20px;
+.homework-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 6px;
 }
 
-.homework-container .homework-list li {
+.homework-container input,
+.homework-container textarea,
+.homework-container select {
+  width: 100%;
+  padding: 12px;
   font-size: 16px;
-  padding: 8px 0;
-  border-bottom: 1px dashed #ccc;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  box-sizing: border-box;
+  margin-bottom: 12px;
 }
 
-.homework-container .homework-input-row {
+.homework-container textarea {
+  resize: vertical;
+}
+
+.homework-container .date-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
-.homework-container input.homework-input {
-  flex: 1;
-  padding: 12px;
-  border: 1px solid #bbb;
+.homework-container .homework-task {
+  padding: 10px 12px;
   border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 8px;
   font-size: 16px;
-  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.homework-container button.homework-add-btn {
+.homework-container .homework-task .delete-homework {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.homework-container .homework-task .delete-homework:hover {
+  background-color: #b02a37;
+}
+
+.homework-container button.homework-add-btn,
+.homework-container button[type="submit"] {
   padding: 12px 20px;
   font-size: 16px;
   background-color: #28a745;
@@ -228,9 +255,11 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  margin-top: 10px;
 }
 
-.homework-container button.homework-add-btn:hover {
+.homework-container button.homework-add-btn:hover,
+.homework-container button[type="submit"]:hover {
   background-color: #218838;
 }
 
@@ -246,30 +275,19 @@
   margin-left: 6px;
 }
 
-.homework-container .homework-task {
-  padding: 10px 12px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  margin-bottom: 8px;
+.homework-container .homework-list {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.homework-container .homework-list li {
   font-size: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ccc;
 }
 
-.homework-container .homework-task button.delete-homework {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.homework-container .homework-task button.delete-homework:hover {
-  background-color: #b02a37;
-}
-
+/* Keep the nav and other To-Do styles untouched */
 
 
 
